@@ -15,7 +15,7 @@
 FROM python:3.13-alpine3.21 AS builder
 
 WORKDIR /app
-COPY pyproject.toml .
+COPY pyproject.toml README.md ./
 COPY src/ src/
 
 # Install build dependencies
