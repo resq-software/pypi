@@ -121,7 +121,7 @@ class TestGetSimulationStatus:
             "created_at": "now",
         }
 
-        result = await get_simulation_status.fn(sim_id)
+        result = await get_simulation_status(sim_id)
 
         assert sim_id in result
         assert "processing" in result
@@ -139,7 +139,7 @@ class TestGetSimulationStatus:
             "request": {},
         }
 
-        result = await get_simulation_status.fn(sim_id)
+        result = await get_simulation_status(sim_id)
 
         assert "completed" in result
         assert "100%" in result
@@ -149,6 +149,6 @@ class TestGetSimulationStatus:
     async def test_get_simulation_status_not_found(self) -> None:
         """Test that non-existent ID raises FastMCPError."""
         with pytest.raises(FastMCPError) as exc_info:
-            await get_simulation_status.fn("SIM-NON-EXISTENT")
+            await get_simulation_status("SIM-NON-EXISTENT")
 
         assert "not found" in str(exc_info.value)

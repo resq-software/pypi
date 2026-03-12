@@ -42,8 +42,7 @@ class TestValidateIncident:
         )
 
         with caplog.at_level(logging.INFO):
-            # Access the original function via .fn to bypass FastMCP wrapper
-            result = await validate_incident.fn(val)
+            result = await validate_incident(val)
 
         assert "successfully CONFIRMED" in result
         assert "INC-CONFIRM-001" in result
@@ -63,8 +62,7 @@ class TestValidateIncident:
         )
 
         with caplog.at_level(logging.INFO):
-            # Access the original function via .fn to bypass FastMCP wrapper
-            result = await validate_incident.fn(val)
+            result = await validate_incident(val)
 
         assert "successfully REJECTED" in result
         assert "INC-REJECT-002" in result
