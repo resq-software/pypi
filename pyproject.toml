@@ -113,7 +113,7 @@ exclude_lines = [
 
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version"]
-branch = "master"
+branch = "main"
 changelog_file = "CHANGELOG.md"
 build_command = "uv build"
 commit_message = "chore(release): {version}"
