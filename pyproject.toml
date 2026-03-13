@@ -111,6 +111,18 @@ exclude_lines = [
   "if __name__ == .__main__.:",
 ]
 
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+branch = "master"
+changelog_file = "CHANGELOG.md"
+build_command = "uv build"
+commit_message = "chore(release): {version}"
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = ["feat", "fix", "perf", "refactor", "docs", "style", "test", "chore", "ci", "build"]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf"]
+
 [dependency-groups]
 dev = [
   "pytest>=8.0.0",

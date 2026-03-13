@@ -1,37 +1,65 @@
-name: Publish
+name: Release
 
 on:
   push:
-    tags:
-      - "v*"
+    branches:
+      - master
+
+permissions:
+  contents: write
+  id-token: write
 
 jobs:
-  publish-pypi:
+  release:
+    name: Release
     runs-on: ubuntu-latest
+    concurrency: release
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.11"
-      - run: uv build
-      - run: uv publish
-        env:
-          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
 
-  publish-docker:
+      - name: Python Semantic Release
+        id: release
+        uses: python-semantic-release/python-semantic-release@v9
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to PyPI
+        if: steps.release.outputs.released == 'true'
+        uses: python-semantic-release/publish-action@v9
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          pypi_token: ${{ secrets.PYPI_TOKEN }}
+
+  docker:
+    name: Docker
+    needs: release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get latest tag
+        id: tag
+        run: |
+          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "version=${TAG#v}" >> $GITHUB_OUTPUT
+
       - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Extract version tag
-        id: meta
-        run: echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
       - uses: docker/build-push-action@v6
         with:
           push: true
           tags: |
             resqsoftware/mcp:latest
-            resqsoftware/mcp:${{ steps.meta.outputs.version }}
+            resqsoftware/mcp:${{ steps.tag.outputs.version }}
