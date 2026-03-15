@@ -1,23 +1,10 @@
-<h1 align="center">resQ MCP</h1>
+# resQ MCP Server
 
-<p align="center">
-  FastMCP server exposing ResQ platform capabilities — simulations, drone coordination, and incident response — to AI clients.
-</p>
+![CI](https://img.shields.io/github/actions/workflow/status/resq-software/mcp/ci.yml?branch=main&label=ci&style=flat-square)
+![PyPI](https://img.shields.io/pypi/v/resq-mcp?style=flat-square)
+![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=flat-square)
 
-<p align="center">
-  <a href="https://github.com/resq-software/mcp/actions/workflows/ci.yml">
-    <img src="https://img.shields.io/github/actions/workflow/status/resq-software/mcp/ci.yml?branch=main&label=ci&style=flat-square" alt="CI" />
-  </a>
-  <a href="https://pypi.org/project/resq-mcp/">
-    <img src="https://img.shields.io/pypi/v/resq-mcp?style=flat-square" alt="PyPI" />
-  </a>
-  <a href="https://codecov.io/gh/resq-software/mcp">
-    <img src="https://codecov.io/gh/resq-software/mcp/graph/badge.svg" alt="Coverage" />
-  </a>
-  <a href="./LICENSE">
-    <img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=flat-square" alt="License: Apache-2.0" />
-  </a>
-</p>
+The **resQ MCP** repository provides a production-ready implementation of the [Model Context Protocol](https://modelcontextprotocol.io/), bridging the [ResQ platform's](https://resq.software) core capabilities—Digital Twin Simulations (DTSOP), Hybrid Coordination Engines (HCE), and drone telemetry—directly to AI-powered environments like Claude Desktop, Cursor, and the MCP Inspector.
 
 ---
 
@@ -25,92 +12,88 @@
 
 - [Overview](#overview)
 - [Features](#features)
-- [Install](#install)
+- [Architecture](#architecture)
 - [Quick Start](#quick-start)
 - [Usage](#usage)
 - [Configuration](#configuration)
+- [API Overview](#api-overview)
+- [Development](#development)
 - [Contributing](#contributing)
-- [Changelog](#changelog)
+- [Roadmap](#roadmap)
 - [License](#license)
 
 ---
 
 ## Overview
 
-`resq-mcp` is a [Model Context Protocol](https://modelcontextprotocol.io) server built with [FastMCP](https://github.com/jlowin/fastmcp). It exposes the [ResQ platform](https://resq.software) — Digital Twin Simulations (DTSOP), Hybrid Coordination Engine (HCE), and real-time drone telemetry — as structured tools, resources, and prompts that AI clients (Claude Desktop, Cursor, MCP Inspector) can call directly.
+`resq-mcp` is built upon [FastMCP](https://github.com/jlowin/fastmcp), enabling rapid integration of complex robotics and simulation workflows into LLMs. It acts as a secure intermediary between your AI agent and the ResQ backend.
 
-**Related projects:**
-
-| Repo | Description |
-|------|-------------|
-| [resq-software/resQ](https://github.com/resq-software/resQ) | Core platform monorepo |
-| [resq-software/cli](https://github.com/resq-software/cli) | CLI tooling |
-| [resq-software/dotnet-sdk](https://github.com/resq-software/dotnet-sdk) | .NET SDK |
+### Core Modules
+* **DTSOP**: Manages digital twin simulation lifecycles.
+* **HCE**: Coordinates hybrid operations across diverse assets.
+* **PDIE**: Handles platform-defined incident evaluation.
+* **Telemetry**: Real-time streaming and monitoring of drone status.
 
 ---
 
 ## Features
 
-- **Tools** — trigger simulations, fetch deployment strategies, validate incidents
-- **Resources** — real-time drone status (`resq://drones/active`), simulation monitoring (`resq://simulations/{id}`)
-- **Prompts** — standardised incident response analysis templates
-- **Async notifications** — subscription support for long-running simulation jobs
-- **Dual transport** — STDIO (Claude Desktop / MCP Inspector) and SSE / HTTP (networked clients)
-- **Pydantic validation** — all inputs fully typed and validated
+* **Bi-directional Transport**: Supports `STDIO` for local integration and `SSE` for remote infrastructure.
+* **Strong Typing**: Full Pydantic validation for all tool inputs and resource outputs.
+* **Security-First**: Configurable `SAFE_MODE` to prevent destructive operations.
+* **Event-Driven**: Asynchronous notification support for long-running simulations.
+* **Ready-to-use Prompts**: Includes baked-in templates for incident response and analysis.
 
 ---
 
-## Install
+## Architecture
 
-### PyPI
+The system utilizes a modular Python backend with structured domain objects and standardized communication protocols.
 
-```sh
-uv add resq-mcp
-# or: pip install resq-mcp
-```
-
-### From source
-
-```sh
-git clone https://github.com/resq-software/mcp.git
-cd mcp
-uv sync
-```
-
-### Docker
-
-```sh
-docker build -t resq-mcp .
-docker run -p 8000:8000 resq-mcp
-```
-
-### Dev environment (Nix)
-
-```sh
-nix develop        # Python 3.12, uv
-# or:
-./scripts/setup.sh # installs Nix + Docker; runs uv sync
+```mermaid
+graph TD
+    User[AI Client / Claude] <-->|MCP Protocol| Server[resq-mcp Server]
+    Server -->|Validation| Config[Config / Pydantic]
+    Server -->|Internal API| Core[ResQ Platform API]
+    Core --> DTSOP[DTSOP Engine]
+    Core --> HCE[Hybrid Coordination Engine]
+    Core --> Telemetry[Drone Telemetry]
 ```
 
 ---
 
 ## Quick Start
 
-**STDIO** (Claude Desktop, MCP Inspector):
+### 1. Prerequisites
+Ensure you have [uv](https://github.com/astral-sh/uv) installed.
 
-```sh
-uv run resq-mcp
-# or after install:
-resq-mcp
+### 2. Installation
+```bash
+# Install package
+uv add resq-mcp
+
+# Or clone from source
+git clone https://github.com/resq-software/mcp.git
+cd mcp && uv sync
 ```
 
-**SSE / HTTP** (networked clients, port 8000):
+### 3. Execution
+**Standard Mode (STDIO):**
+```bash
+uv run resq-mcp
+```
 
-```sh
+**Networked Mode (SSE):**
+```bash
 RESQ_HOST=0.0.0.0 RESQ_PORT=8000 uv run resq-mcp
 ```
 
-Add to Claude Desktop (`claude_desktop_config.json`):
+---
+
+## Usage
+
+### Connecting to Claude Desktop
+Add this to your `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ```json
 {
@@ -118,102 +101,96 @@ Add to Claude Desktop (`claude_desktop_config.json`):
     "resq": {
       "command": "uv",
       "args": ["run", "resq-mcp"],
-      "env": { "RESQ_API_KEY": "your-key" }
+      "env": { "RESQ_API_KEY": "your-prod-token" }
     }
   }
 }
 ```
 
----
-
-## Usage
-
-### Trigger a simulation
-
-```
-Tool: trigger_simulation
-Args: { "incident_type": "wildfire", "location": { "lat": 37.77, "lon": -122.41 } }
+### Tool Invocation Example
+Triggering an incident simulation:
+```python
+# Via AI Interface
+# Tool: trigger_simulation
+# Payload: { "incident_type": "wildfire", "location": {"lat": 37.7, "lon": -122.4} }
 ```
 
-### Get active drone status
-
+### Resource Subscription
+Accessing live data:
+```text
+resq://drones/active
 ```
-Resource: resq://drones/active
-```
-
-### Incident response prompt
-
-```
-Prompt: incident_response_analysis
-Args: { "incident_id": "INC-2026-0042" }
-```
-
-Full API reference: [`src/resq_mcp/`](./src/resq_mcp/)
 
 ---
 
 ## Configuration
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `RESQ_API_KEY` | `resq-dev-token` | Bearer token for authenticated endpoints |
-| `RESQ_SAFE_MODE` | `true` | Disables side-effecting tools in safe mode |
-| `RESQ_HOST` | `127.0.0.1` | Host to bind (SSE transport) |
-| `RESQ_PORT` | `8000` | Port to listen on (SSE transport) |
-| `RESQ_DEBUG` | `false` | Enable debug logging |
-| `RESQ_PROJECT_NAME` | `resQ MCP` | Display name reported to MCP clients |
+Settings are managed via environment variables and validated by `src/resq_mcp/config.py`.
 
-Copy `.env.example` to `.env` and override as needed. All settings are validated via Pydantic on startup.
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `RESQ_API_KEY` | Authentication token | `resq-dev-token` |
+| `RESQ_SAFE_MODE` | If true, blocks mutation tools | `true` |
+| `RESQ_DEBUG` | Verbose logging | `false` |
+| `RESQ_PORT` | Port for SSE server | `8000` |
+
+---
+
+## API Overview
+
+The server exposes several high-level endpoints:
+
+* **`trigger_simulation`**: Starts a new DTSOP simulation instance.
+* **`get_drone_telemetry`**: Polls active drone status or subscribes to events.
+* **`validate_incident`**: Runs a check against PDIE protocols to assess threat levels.
+* **`list_strategies`**: Retrieves cached deployment strategies for ongoing incidents.
+
+Refer to `src/resq_mcp/tools.py` for granular parameter definitions.
+
+---
+
+## Development
+
+The project includes pre-commit hooks and CI/CD pipelines to ensure code health.
+
+### Setup
+```bash
+./scripts/setup.sh
+```
+
+### Testing
+We use `pytest` with extensive mocking for the external ResQ API.
+```bash
+uv run pytest tests/
+```
+
+### Type Checking
+```bash
+uv run mypy src/
+```
 
 ---
 
 ## Contributing
 
-We welcome contributions. Please read [`CONTRIBUTING.md`](./CONTRIBUTING.md) before opening a PR.
+1. **Fork** the repository.
+2. **Feature Branch**: Create a branch following `feat/`, `fix/`, or `refactor/` prefixes.
+3. **Commit Convention**: Follow [Conventional Commits](https://www.conventionalcommits.org/).
+4. **Pull Request**: Ensure CI passes (tests, linting, and coverage).
 
-**Local setup:**
-
-```sh
-git clone https://github.com/resq-software/mcp.git
-cd mcp
-./scripts/setup.sh   # installs Nix + Docker; runs uv sync
-```
-
-**Run tests:**
-
-```sh
-uv run pytest
-```
-
-**Lint and type-check:**
-
-```sh
-uv run ruff check .
-uv run mypy src/
-```
-
-**Commit convention:** This project uses [Conventional Commits](https://www.conventionalcommits.org/).
-All PRs must follow the `type(scope): subject` format — see the table below.
-
-| Prefix | Effect on version |
-|--------|------------------|
-| `feat:` | Minor bump (`0.x.0`) |
-| `fix:` / `perf:` | Patch bump (`0.0.x`) |
-| `BREAKING CHANGE` footer or `!` suffix | Major bump (`x.0.0`) |
-| `docs:` `style:` `refactor:` `test:` `chore:` | No version bump |
-
-Releases are automated via [python-semantic-release](https://python-semantic-release.readthedocs.io/) on merge to `main`.
+Check `CONTRIBUTING.md` for full coding standards.
 
 ---
 
-## Changelog
+## Roadmap
 
-See [CHANGELOG.md](./CHANGELOG.md) for the full release history.
+- [ ] Support for OAuth2 authentication flows.
+- [ ] Extended telemetry visualization resources.
+- [ ] Real-time WebSocket support for high-frequency updates.
+- [ ] Plugin architecture for third-party coordination engines.
 
 ---
 
 ## License
 
-Copyright 2026 ResQ
-
-Licensed under the [Apache License, Version 2.0](./LICENSE).
+Copyright 2026 ResQ. Distributed under the Apache License, Version 2.0. See [LICENSE](./LICENSE) for details.
