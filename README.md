@@ -4,97 +4,73 @@
 ![PyPI](https://img.shields.io/pypi/v/resq-mcp?style=flat-square)
 ![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=flat-square)
 
-The **resQ MCP** repository provides a production-ready implementation of the [Model Context Protocol](https://modelcontextprotocol.io/), bridging the [ResQ platform's](https://resq.software) core capabilities—Digital Twin Simulations (DTSOP), Hybrid Coordination Engines (HCE), and drone telemetry—directly to AI-powered environments like Claude Desktop, Cursor, and the MCP Inspector.
-
----
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Quick Start](#quick-start)
-- [Usage](#usage)
-- [Configuration](#configuration)
-- [API Overview](#api-overview)
-- [Development](#development)
-- [Contributing](#contributing)
-- [Roadmap](#roadmap)
-- [License](#license)
+A production-ready Model Context Protocol (MCP) server that integrates ResQ platform robotics, simulation, and telemetry capabilities into AI agents.
 
 ---
 
 ## Overview
 
-`resq-mcp` is built upon [FastMCP](https://github.com/jlowin/fastmcp), enabling rapid integration of complex robotics and simulation workflows into LLMs. It acts as a secure intermediary between your AI agent and the ResQ backend.
-
-### Core Modules
-* **DTSOP**: Manages digital twin simulation lifecycles.
-* **HCE**: Coordinates hybrid operations across diverse assets.
-* **PDIE**: Handles platform-defined incident evaluation.
-* **Telemetry**: Real-time streaming and monitoring of drone status.
+`resq-mcp` bridges the ResQ platform's core capabilities—Digital Twin Simulations (DTSOP), Hybrid Coordination Engines (HCE), and drone telemetry—directly to AI-powered environments like Claude Desktop, Cursor, and the MCP Inspector. It utilizes [FastMCP](https://github.com/jlowin/fastmcp) to expose secure, typed interfaces for mission-critical operations.
 
 ---
 
 ## Features
 
-* **Bi-directional Transport**: Supports `STDIO` for local integration and `SSE` for remote infrastructure.
-* **Strong Typing**: Full Pydantic validation for all tool inputs and resource outputs.
-* **Security-First**: Configurable `SAFE_MODE` to prevent destructive operations.
-* **Event-Driven**: Asynchronous notification support for long-running simulations.
-* **Ready-to-use Prompts**: Includes baked-in templates for incident response and analysis.
+* **Native Integration**: Domain-specific support for ResQ objects (DTSOP, HCE, PDIE).
+* **Flexible Transport**: Native support for both `STDIO` and `SSE` transport modes.
+* **Type Safety**: Built on strict Pydantic-based schemas for AI-tool reliability.
+* **Security Controls**: Integrated safe-mode prevents unauthorized mutations in production.
 
 ---
 
 ## Architecture
 
-The system utilizes a modular Python backend with structured domain objects and standardized communication protocols.
+The server acts as a secure intermediary, translating AI natural language requests into authenticated, platform-native service calls.
 
 ```mermaid
-graph TD
-    User[AI Client / Claude] <-->|MCP Protocol| Server[resq-mcp Server]
-    Server -->|Validation| Config[Config / Pydantic]
-    Server -->|Internal API| Core[ResQ Platform API]
-    Core --> DTSOP[DTSOP Engine]
-    Core --> HCE[Hybrid Coordination Engine]
-    Core --> Telemetry[Drone Telemetry]
+c4Context
+    title System Context: resq-mcp Integration
+
+    Person(ai, "AI Client", "Claude Desktop / Cursor")
+    System_Boundary(resq_boundary, "resq-mcp Server") {
+        System(server, "resq-mcp Server", "MCP-compliant Interface")
+        System_Boundary(backend, "ResQ Platform") {
+            Component(dtsop, "DTSOP Engine", "Physics/RL Simulations")
+            Component(hce, "HCE Engine", "Coordination Logic")
+            Component(telemetry, "Drone Telemetry", "Real-time Status")
+        }
+    }
+
+    Rel(ai, server, "Uses Model Context Protocol")
+    Rel(server, dtsop, "Executes Simulation")
+    Rel(server, hce, "Validates Incidents")
+    Rel(server, telemetry, "Subscribes to Data")
+```
+
+---
+
+## Installation
+
+Ensure you have [uv](https://github.com/astral-sh/uv) installed, then clone the repository:
+
+```bash
+git clone https://github.com/resq-software/mcp.git
+cd mcp
+uv sync
 ```
 
 ---
 
 ## Quick Start
 
-### 1. Prerequisites
-Ensure you have [uv](https://github.com/astral-sh/uv) installed.
-
-### 2. Installation
-```bash
-# Install package
-uv add resq-mcp
-
-# Or clone from source
-git clone https://github.com/resq-software/mcp.git
-cd mcp && uv sync
-```
-
-### 3. Execution
-**Standard Mode (STDIO):**
+### 1. Run in STDIO mode
+For local integration with IDEs or desktop assistants:
 ```bash
 uv run resq-mcp
 ```
 
-**Networked Mode (SSE):**
-```bash
-RESQ_HOST=0.0.0.0 RESQ_PORT=8000 uv run resq-mcp
-```
-
----
-
-## Usage
-
-### Connecting to Claude Desktop
-Add this to your `~/Library/Application Support/Claude/claude_desktop_config.json`:
-
+### 2. Configure Claude Desktop
+Add the following to your `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
@@ -107,87 +83,77 @@ Add this to your `~/Library/Application Support/Claude/claude_desktop_config.jso
 }
 ```
 
-### Tool Invocation Example
-Triggering an incident simulation:
-```python
-# Via AI Interface
-# Tool: trigger_simulation
-# Payload: { "incident_type": "wildfire", "location": {"lat": 37.7, "lon": -122.4} }
-```
+---
 
-### Resource Subscription
-Accessing live data:
-```text
-resq://drones/active
+## Usage
+
+The server exposes tools that allow AI agents to manage robotics operations directly.
+
+### Request Lifecycle
+```mermaid
+flowchart TD
+    Prompt[LLM Prompt] --> Protocol[MCP Protocol Layer]
+    Protocol --> Pydantic[Pydantic Validation]
+    Pydantic --> Service{ResQ Service Call}
+    Service -->|Auth/SafeMode Check| Action[Execution]
 ```
 
 ---
 
 ## Configuration
 
-Settings are managed via environment variables and validated by `src/resq_mcp/config.py`.
+Settings are managed via environment variables. Create a `.env` file in the project root:
 
 | Variable | Description | Default |
 | :--- | :--- | :--- |
-| `RESQ_API_KEY` | Authentication token | `resq-dev-token` |
-| `RESQ_SAFE_MODE` | If true, blocks mutation tools | `true` |
-| `RESQ_DEBUG` | Verbose logging | `false` |
-| `RESQ_PORT` | Port for SSE server | `8000` |
+| `RESQ_API_KEY` | Authentication token for platform access | `resq-dev-token` |
+| `RESQ_SAFE_MODE` | Prevents destructive platform mutations | `true` |
+| `RESQ_PORT` | Port for SSE (networked) mode | `8000` |
 
 ---
 
-## API Overview
+## API Reference
 
-The server exposes several high-level endpoints:
+### Core Modules
+* **DTSOP**: Manages physics-based digital twin simulations.
+* **HCE**: Coordinates hybrid operations across diverse assets.
+* **PDIE**: Handles predictive platform incident evaluation.
 
-* **`trigger_simulation`**: Starts a new DTSOP simulation instance.
-* **`get_drone_telemetry`**: Polls active drone status or subscribes to events.
-* **`validate_incident`**: Runs a check against PDIE protocols to assess threat levels.
-* **`list_strategies`**: Retrieves cached deployment strategies for ongoing incidents.
+### Key Endpoints
+* `run_simulation`: Queues a high-fidelity physics simulation job.
+* `get_deployment_strategy`: Retrieves RL-optimized strategy for a specific incident.
+* `validate_incident`: Evaluates sensor data against PDIE risk protocols.
 
-Refer to `src/resq_mcp/tools.py` for granular parameter definitions.
+---
+
+## Security Model
+
+`resq-mcp` implements a two-tier security approach:
+1. **Authentication**: Enforced via `RESQ_API_KEY` validated through `HTTPBearer` middleware on SSE connections.
+2. **Safe Mode**: When `RESQ_SAFE_MODE=true` (default), tools that perform platform mutations (e.g., `request_drone_deployment`) will return a `FastMCPError` rather than executing, providing a sandbox environment for agent testing.
 
 ---
 
 ## Development
 
-The project includes pre-commit hooks and CI/CD pipelines to ensure code health.
+### Troubleshooting
+* **Connection Refused**: Ensure `RESQ_PORT` is not already in use if running in SSE mode.
+* **Schema Validation Errors**: Check that the `IncidentReport` payload matches the Pydantic schema in `models.py`.
+* **Missing Env Vars**: Run `uv run resq-mcp` to trigger an immediate fail-fast validation check.
 
-### Setup
-```bash
-./scripts/setup.sh
-```
-
-### Testing
-We use `pytest` with extensive mocking for the external ResQ API.
-```bash
-uv run pytest tests/
-```
-
-### Type Checking
-```bash
-uv run mypy src/
-```
+### Standards
+- **Async First**: All handlers must be `async def`.
+- **Typing**: Use full type annotations; `mypy` is enforced in CI.
+- **Commits**: Follow [Conventional Commits](https://www.conventionalcommits.org/).
 
 ---
 
 ## Contributing
 
 1. **Fork** the repository.
-2. **Feature Branch**: Create a branch following `feat/`, `fix/`, or `refactor/` prefixes.
-3. **Commit Convention**: Follow [Conventional Commits](https://www.conventionalcommits.org/).
-4. **Pull Request**: Ensure CI passes (tests, linting, and coverage).
-
-Check `CONTRIBUTING.md` for full coding standards.
-
----
-
-## Roadmap
-
-- [ ] Support for OAuth2 authentication flows.
-- [ ] Extended telemetry visualization resources.
-- [ ] Real-time WebSocket support for high-frequency updates.
-- [ ] Plugin architecture for third-party coordination engines.
+2. **Branch**: Use `feat/`, `fix/`, or `refactor/` prefixes.
+3. **Lint**: Run `./scripts/setup.sh` to install git hooks.
+4. **Test**: Execute `uv run pytest` before submitting PRs.
 
 ---
 
