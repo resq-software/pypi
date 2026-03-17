@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.3.3 (2026-03-17)
+
+### Bug Fixes
+
+- **ci**: Use softprops/action-gh-release for asset uploads
+  ([`ba8a0cd`](https://github.com/resq-software/mcp/commit/ba8a0cd0e135d8b2be5933706b95ab29e7b4d4b4))
+
+
 ## v0.3.2 (2026-03-17)
 
 ### Bug Fixes
