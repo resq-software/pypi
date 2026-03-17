@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.3.2 (2026-03-17)
+
+### Bug Fixes
+
+- **ci**: Use --clobber for release asset uploads to handle re-runs
+  ([`9390cf2`](https://github.com/resq-software/mcp/commit/9390cf2fe0098301c612d09472b5b4faa353c0a4))
+
+
 ## v0.3.1 (2026-03-17)
 
 ### Bug Fixes
