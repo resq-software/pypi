@@ -30,7 +30,7 @@ uv run ruff format src/   # Format
 - Python 3.11+; use `from __future__ import annotations` in all files.
 - Type-annotate all tool parameters and return types — FastMCP uses these for schema generation.
 - Async functions throughout; no blocking I/O in tool handlers.
-- Tests use pytest + `pytest-asyncio`; mock external HTTP with `respx`.
+- Tests use pytest + `pytest-asyncio`; mock external HTTP with `aioresponses`.
 - All source files carry the Apache-2.0 license header.
 - Keep `AGENTS.md` and `CLAUDE.md` in sync using `./agent-sync.sh`.
 
