@@ -152,7 +152,8 @@ jobs:
             dist-signed/*.whl \
             dist-signed/*.sigstore.json \
             sbom/sbom.cyclonedx.json \
-            --repo "${{ github.repository }}"
+            --repo "${{ github.repository }}" \
+            --clobber
 
   # Note: The spec mentions slsa-framework/slsa-github-generator for SLSA L2.
   # We use actions/attest-build-provenance instead — it's GitHub's native
