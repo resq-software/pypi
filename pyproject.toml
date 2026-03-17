@@ -112,6 +112,7 @@ source = ["src/resq_mcp"]
 branch = true
 
 [tool.coverage.report]
+fail_under = 85
 exclude_lines = [
   "pragma: no cover",
   "if TYPE_CHECKING:",
