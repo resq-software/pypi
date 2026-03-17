@@ -74,7 +74,7 @@ jobs:
           path: dist/
 
       - name: Sign with Sigstore
-        uses: sigstore/gh-action-sigstore-python@v3
+        uses: sigstore/gh-action-sigstore-python@v3.2.0
         with:
           inputs: ./dist/*.tar.gz ./dist/*.whl
 
@@ -109,9 +109,10 @@ jobs:
     needs: [release, build]
     if: needs.release.outputs.released == 'true'
     runs-on: ubuntu-latest
-    environment: release
-    permissions:
-      id-token: write
+    # TODO: Switch to OIDC once Trusted Publisher is configured on pypi.org
+    # environment: release
+    # permissions:
+    #   id-token: write
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -119,6 +120,8 @@ jobs:
           path: dist/
 
       - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_TOKEN }}
 
   publish-github:
     name: Publish to GitHub Release
