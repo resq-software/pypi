@@ -175,3 +175,49 @@ class TestRequestDroneDeployment:
 
         assert isinstance(result, DeploymentStatus)
         assert 30 <= result.eta_seconds <= 120
+
+
+class TestProbabilisticBehavior:
+    def test_disaster_detection_rate_approximately_30_percent(self) -> None:
+        import random
+        random.seed(42)
+        n_runs = 1000
+        detections = sum(
+            1 for _ in range(n_runs)
+            if isinstance(scan_current_sector("Sector-1"), SectorAnalysis)
+            and scan_current_sector("Sector-1").status == "CRITICAL_ALERT"
+        )
+        # Note: each iteration calls scan twice, but we only count the first.
+        # Let's fix: count properly
+        detections = 0
+        random.seed(42)
+        for _ in range(n_runs):
+            result = scan_current_sector("Sector-1")
+            if isinstance(result, SectorAnalysis) and result.status == "CRITICAL_ALERT":
+                detections += 1
+        rate = detections / n_runs
+        assert 0.20 <= rate <= 0.40, f"Detection rate {rate:.2%} outside expected range"
+
+    def test_deployment_eta_within_documented_range(self) -> None:
+        import random
+        random.seed(42)
+        for _ in range(100):
+            result = request_drone_deployment("Sector-1", "high")
+            if isinstance(result, DeploymentStatus):
+                assert 30 <= result.eta_seconds <= 120
+
+    def test_drone_id_format_consistent(self) -> None:
+        import random, re
+        random.seed(42)
+        pattern = re.compile(r"^UNIT-\d{3}$")
+        for _ in range(100):
+            result = request_drone_deployment("Sector-2", "critical")
+            if isinstance(result, DeploymentStatus):
+                assert pattern.match(result.drone_id), f"Bad drone ID: {result.drone_id}"
+
+    def test_swarm_battery_within_range(self) -> None:
+        import random
+        random.seed(42)
+        for _ in range(100):
+            status = get_drone_swarm_status()
+            assert 60 <= status.average_battery <= 100
