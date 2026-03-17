@@ -234,9 +234,8 @@ class TestValidateIncidentTool:
         assert "successfully CONFIRMED" in result
         assert "INC-CONFIRM-001" in result
 
-        # Verify logging
+        # Verify logging (notes moved to DEBUG level for PII safety)
         assert "Incident INC-CONFIRM-001 CONFIRMED by Human-Operator" in caplog.text
-        assert "Notes: Confirmed via visual evidence" in caplog.text
 
     @pytest.mark.asyncio
     async def test_validate_incident_rejects(self, caplog: LogCaptureFixture) -> None:
@@ -256,7 +255,6 @@ class TestValidateIncidentTool:
 
         # Verify logging
         assert "Incident INC-REJECT-002 REJECTED by Auto-Validator" in caplog.text
-        assert "Notes: Rejected due to low confidence" in caplog.text
 
     @pytest.mark.asyncio
     async def test_validate_with_correlated_pre_alert(self, caplog: LogCaptureFixture) -> None:
@@ -292,7 +290,7 @@ class TestValidateIncidentTool:
             validation_source="Human-Operator-Bob",
             notes="False positive: construction activity, not fire",
         )
-        with caplog.at_level(logging.INFO):
+        with caplog.at_level(logging.DEBUG):
             result = await validate_incident_tool(val)
         assert "successfully REJECTED" in result
         assert "construction activity" in caplog.text
@@ -305,7 +303,7 @@ class TestValidateIncidentTool:
             validation_source="Audit-Test-Source",
             notes="Testing log format completeness",
         )
-        with caplog.at_level(logging.INFO):
+        with caplog.at_level(logging.DEBUG):
             await validate_incident_tool(val)
         log_text = caplog.text
         assert "INC-LOG-006" in log_text

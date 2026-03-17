@@ -72,10 +72,10 @@ async def validate_incident(val: IncidentValidation) -> str:
     """
     action = "CONFIRMED" if val.is_confirmed else "REJECTED"
     logger.info(
-        "Incident %s %s by %s. Notes: %s",
+        "Incident %s %s by %s",
         val.incident_id,
         action,
         val.validation_source,
-        val.notes,
     )
+    logger.debug("Incident %s notes: %s", val.incident_id, val.notes)
     return f"Incident {val.incident_id} successfully {action}."
