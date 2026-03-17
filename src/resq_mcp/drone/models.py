@@ -16,14 +16,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
 from resq_mcp.core.models import Coordinates, _utc_now
-
-if TYPE_CHECKING:
-    from datetime import datetime
 
 
 class SectorAnalysis(BaseModel):

@@ -81,7 +81,8 @@ select = [
   "S",     # flake8-bandit (security)
 ]
 ignore = [
-  "S104", # Possible binding to all interfaces (acceptable for dev server)
+  "S104",  # Possible binding to all interfaces (acceptable for dev server)
+  "TC003", # Pydantic models need datetime at runtime, not just TYPE_CHECKING
 ]
 
 [tool.ruff.lint.isort]
