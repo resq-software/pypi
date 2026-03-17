@@ -153,7 +153,7 @@ async def simulation_processor(server: FastMCP) -> None:
                 data["progress"] = 0.5
                 logger.info("Simulation %s moved to PROCESSING", sim_id)
                 try:
-                    await server.notify_resource_updated(f"resq://simulations/{sim_id}")
+                    await server.notify_resource_updated(f"resq://simulations/{sim_id}")  # type: ignore[attr-defined]  # valid FastMCP API, missing from type stubs
                 except Exception:
                     logger.debug("Failed to notify for %s", sim_id, exc_info=True)
 
@@ -164,7 +164,7 @@ async def simulation_processor(server: FastMCP) -> None:
                 data["result_url"] = f"neofs://sim_results/{sim_id}.json"
                 logger.info("Simulation %s COMPLETED", sim_id)
                 try:
-                    await server.notify_resource_updated(f"resq://simulations/{sim_id}")
+                    await server.notify_resource_updated(f"resq://simulations/{sim_id}")  # type: ignore[attr-defined]  # valid FastMCP API, missing from type stubs
                 except Exception:
                     logger.debug("Failed to notify for %s", sim_id, exc_info=True)
 
@@ -337,7 +337,7 @@ async def run_simulation(request: SimulationRequest, ctx: Context | None = None)
     }
 
     if ctx:
-        ctx.info(f"Simulation {sim_id} queued. Monitor at resq://simulations/{sim_id}")
+        await ctx.info(f"Simulation {sim_id} queued. Monitor at resq://simulations/{sim_id}")
 
     return (
         f"Simulation queued with ID: {sim_id}. "
