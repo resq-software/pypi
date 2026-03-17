@@ -15,4 +15,7 @@ dist/
 
 # Coverage artifacts
 .coverage
-htmlcov/docs/
+htmlcov/
+
+# Superpowers artifacts
+docs/superpowers/
