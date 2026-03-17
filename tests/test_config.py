@@ -19,6 +19,8 @@ from __future__ import annotations
 import os
 from unittest.mock import patch
 
+import pytest
+
 from resq_mcp.config import Settings
 
 
@@ -63,3 +65,31 @@ class TestSettings:
         with patch.dict(os.environ, {"RESQ_SAFE_MODE": "false"}):
             settings = Settings()
             assert settings.SAFE_MODE is False
+
+
+class TestValidateEnvironment:
+    """Tests for the validate_environment function."""
+
+    def test_require_api_key_raises_with_default_token(self) -> None:
+        """Default dev token raises ConfigurationError."""
+        from resq_mcp.config import ConfigurationError, validate_environment
+        with pytest.raises(ConfigurationError, match="non-default"):
+            validate_environment(require_api_key=True)
+
+    def test_require_api_key_raises_with_empty_string(self) -> None:
+        """Empty API key raises ConfigurationError."""
+        from resq_mcp.config import ConfigurationError, settings, validate_environment
+        with patch.object(settings, "API_KEY", ""):
+            with pytest.raises(ConfigurationError, match="RESQ_API_KEY"):
+                validate_environment(require_api_key=True)
+
+    def test_require_api_key_passes_with_custom_token(self) -> None:
+        """Custom API key passes validation."""
+        from resq_mcp.config import settings, validate_environment
+        with patch.object(settings, "API_KEY", "my-production-token-123"):
+            validate_environment(require_api_key=True)
+
+    def test_no_require_api_key_passes_with_default(self) -> None:
+        """Validation passes when api key not required."""
+        from resq_mcp.config import validate_environment
+        validate_environment(require_api_key=False)
