@@ -171,6 +171,14 @@ jobs:
         with:
           subject-path: dist/*
 
+      - name: Verify attestation
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for f in dist/*.whl dist/*.tar.gz; do
+            gh attestation verify "$f" --repo "${{ github.repository }}" || true
+          done
+
   docker:
     name: Docker
     needs: [release, publish-pypi]

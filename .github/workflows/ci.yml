@@ -94,7 +94,7 @@ jobs:
 
   test-pypi:
     name: TestPyPI Publish
-    needs: [lint, typecheck, security]
+    needs: [build-verify]
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     environment: test-pypi
