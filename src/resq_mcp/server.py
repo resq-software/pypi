@@ -139,7 +139,7 @@ async def simulation_processor(server: FastMCP) -> None:
     """
     while True:
         await asyncio.sleep(2)
-        for sim_id, data in simulations.items():
+        for sim_id, data in list(simulations.items()):
             if data["status"] == "pending":
                 data["status"] = "processing"
                 data["progress"] = 0.5

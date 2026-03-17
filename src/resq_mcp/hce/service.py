@@ -79,7 +79,7 @@ def validate_incident(report: IncidentReport) -> IncidentValidation:
             - notes: Detailed reasoning for decision
 
     Example:
-        >>> from resq_mcp.models import IncidentReport
+        >>> from resq_mcp.hce.models import IncidentReport
         >>> report = IncidentReport(
         ...     incident_id="INC-123",
         ...     source="edge_ai",

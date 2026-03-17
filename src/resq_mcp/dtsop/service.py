@@ -72,7 +72,7 @@ def run_simulation(request: SimulationRequest) -> str:
              Use this ID to monitor progress via resq://simulations/{id} resource.
 
     Example:
-        >>> from resq_mcp.models import SimulationRequest
+        >>> from resq_mcp.dtsop.models import SimulationRequest
         >>> req = SimulationRequest(
         ...     scenario_id="flood-scenario-001",
         ...     sector_id="Sector-1",

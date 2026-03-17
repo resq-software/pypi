@@ -56,7 +56,7 @@ from resq_mcp.pdie.models import PreAlert, VulnerabilityMap
 from resq_mcp.pdie.service import get_predictive_alerts, get_vulnerability_map
 from resq_mcp.server import mcp
 
-__version__ = "2.0.0"
+__version__ = "0.2.0"
 
 __all__ = [  # noqa: RUF022 - Organized by category for readability
     # Server

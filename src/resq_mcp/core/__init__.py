@@ -24,7 +24,6 @@ from resq_mcp.core.models import (
     DisasterScenario,
     ErrorResponse,
     Sector,
-    _utc_now,
 )
 from resq_mcp.core.security import verify_api_key
 from resq_mcp.core.telemetry import setup_telemetry, trace
@@ -45,7 +44,6 @@ __all__ = [
     "Sector",
     "Settings",
     "TimeoutConfig",
-    "_utc_now",
     "get_default_timeout",
     "get_max_polling_attempts",
     "get_polling_interval",

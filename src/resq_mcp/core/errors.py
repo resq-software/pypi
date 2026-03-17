@@ -47,7 +47,7 @@ class MCPErrorFormatter:
             error_response["error"]["details"] = details
         if suggestion:
             error_response["error"]["suggestion"] = suggestion
-        if http_status:
+        if http_status is not None:
             error_response["error"]["http_status"] = http_status
         return json.dumps(error_response)
 
