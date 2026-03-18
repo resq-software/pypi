@@ -26,7 +26,6 @@ from __future__ import annotations
 
 import hashlib
 import uuid
-from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Final
 
 from resq_mcp.hce.models import IncidentReport, IncidentValidation, MissionParameters
@@ -169,15 +168,19 @@ def update_mission_params(
     """
     del drone_id  # Unused in stub - would be used to target specific drone
 
-    # Generate a mock blockchain hash for the strategy record
-    hash_input = f"{strategy_id}-{datetime.now(UTC).isoformat()}"
-    strategy_hash = hashlib.sha256(hash_input.encode()).hexdigest()
+    mission_id_raw = uuid.uuid4().hex[:8].upper()
+    # Hash is deterministic given (strategy_id, mission_id) — reproducible for audit lookups.
+    # Previously included datetime.now() which made the hash non-deterministic and
+    # impossible to verify against any real blockchain record.
+    strategy_hash = hashlib.sha256(
+        f"{strategy_id}:{mission_id_raw}".encode()
+    ).hexdigest()
 
     # Determine risk tolerance based on strategy urgency
     risk_tolerance = 0.9 if "URGENT" in strategy_id.upper() else 0.5
 
     return MissionParameters(
-        mission_id=f"MISS-{uuid.uuid4().hex[:8].upper()}",
+        mission_id=f"MISS-{mission_id_raw}",
         target_sector="Dynamic-Assigned",
         authorized_actions=["autonomous_flight", "payload_release_authorized"],
         risk_tolerance=risk_tolerance,

@@ -20,13 +20,15 @@
 # NameError when FastMCP tries to evaluate the forward references.
 
 import logging
+from datetime import UTC, datetime
 
 from fastmcp import Context
+from fastmcp.exceptions import FastMCPError
 
 from resq_mcp.dtsop.models import OptimizationStrategy, SimulationRequest
 from resq_mcp.dtsop.service import get_optimization_strategy
 from resq_mcp.dtsop.service import run_simulation as trigger_sim
-from resq_mcp.server import mcp, simulations
+from resq_mcp.server import MAX_SIMULATIONS, mcp, simulations
 
 logger = logging.getLogger("resq-mcp")
 
@@ -84,12 +86,18 @@ async def run_simulation(request: SimulationRequest, ctx: Context | None = None)
     """
     logger.info("Received Simulation Request: %s", request.scenario_id)
 
+    if len(simulations) >= MAX_SIMULATIONS:
+        raise FastMCPError(
+            f"Simulation capacity reached ({MAX_SIMULATIONS} active jobs). "
+            "Wait for existing simulations to complete before submitting new ones."
+        )
+
     sim_id = trigger_sim(request)
 
     simulations[sim_id] = {
         "status": "pending",
         "request": request.model_dump(),
-        "created_at": "now",
+        "created_at": datetime.now(UTC).isoformat(),
     }
 
     if ctx:

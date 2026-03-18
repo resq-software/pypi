@@ -25,6 +25,7 @@ Note:
 from __future__ import annotations
 
 import logging
+import secrets
 
 from fastapi import HTTPException, Request, status
 from fastapi.security import HTTPBearer
@@ -68,8 +69,8 @@ def verify_api_key(request: Request) -> str:
             detail="Invalid Authentication Scheme",
         )
 
-    if token != settings.API_KEY:
-        logger.warning("Invalid token attempt: %s***", token[:4])
+    if not secrets.compare_digest(token, settings.API_KEY):
+        logger.warning("Invalid token attempt from request")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid API Key",

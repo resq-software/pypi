@@ -20,9 +20,11 @@
 # NameError when FastMCP tries to evaluate the forward references.
 
 import logging
+from datetime import UTC, datetime
 
-from resq_mcp.hce.models import IncidentValidation
-from resq_mcp.server import mcp
+from resq_mcp.hce.models import IncidentValidation, MissionParameters
+from resq_mcp.hce.service import update_mission_params as _update_mission_params
+from resq_mcp.server import incidents, mcp
 
 logger = logging.getLogger("resq-mcp")
 
@@ -71,6 +73,25 @@ async def validate_incident(val: IncidentValidation) -> str:
         for post-incident analysis and ML model refinement.
     """
     action = "CONFIRMED" if val.is_confirmed else "REJECTED"
+
+    # Idempotency / conflict guard — prevent silent re-validation with opposite result
+    if val.incident_id in incidents:
+        existing = incidents[val.incident_id]
+        if existing["is_confirmed"] != val.is_confirmed:
+            existing_action = "CONFIRMED" if existing["is_confirmed"] else "REJECTED"
+            return (
+                f"Conflict: Incident {val.incident_id} was already {existing_action} "
+                f"by {existing['validation_source']}. "
+                f"Conflicting re-validation rejected."
+            )
+        return f"Incident {val.incident_id} already {action} (idempotent)."
+
+    incidents[val.incident_id] = {
+        "is_confirmed": val.is_confirmed,
+        "validation_source": val.validation_source,
+        "notes": val.notes,
+        "validated_at": datetime.now(UTC).isoformat(),
+    }
     logger.info(
         "Incident %s %s by %s",
         val.incident_id,
@@ -79,3 +100,31 @@ async def validate_incident(val: IncidentValidation) -> str:
     )
     logger.debug("Incident %s notes: %s", val.incident_id, val.notes)
     return f"Incident {val.incident_id} successfully {action}."
+
+
+@mcp.tool()
+async def update_mission_params(drone_id: str, strategy_id: str) -> MissionParameters:
+    """Push authorized mission parameters to a drone for an approved strategy.
+
+    Completes the deployment workflow after a strategy has been approved:
+    get_deployment_strategy -> (human approval) -> update_mission_params -> drone executes.
+
+    Args:
+        drone_id: Target drone identifier (e.g., "DRONE-Alpha").
+        strategy_id: Approved strategy ID from get_deployment_strategy (e.g., "STRAT-X1Y2Z3").
+
+    Returns:
+        MissionParameters: Authorized parameter set including mission ID, allowed actions,
+            risk tolerance, and a deterministic blockchain-anchored strategy hash.
+
+    Example:
+        >>> params = await update_mission_params("DRONE-Alpha", "STRAT-ABCD1234")
+        >>> print(params.authorized_actions)
+        >>> print(params.strategy_hash)  # 0xSHA256(strategy_id:mission_id)
+    """
+    logger.info(
+        "Pushing mission params to drone %s for strategy %s",
+        drone_id,
+        strategy_id,
+    )
+    return _update_mission_params(drone_id, strategy_id)
