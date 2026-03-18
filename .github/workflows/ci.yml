@@ -47,8 +47,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12", "3.13", "3.14-dev"]
-    continue-on-error: ${{ matrix.python-version == '3.14-dev' }}
+        python-version: ["3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v7
