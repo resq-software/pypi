@@ -17,16 +17,16 @@
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastmcp.exceptions import FastMCPError
 
 from resq_mcp.server import (
+    _process_simulation,
     _processing_tasks,
     lifespan,
     simulations,
-    _process_simulation,
 )
 
 
@@ -89,9 +89,11 @@ class TestProcessSimulation:
         async def cancel_during_sleep(*args):
             raise asyncio.CancelledError()
 
-        with patch("resq_mcp.server.asyncio.sleep", side_effect=cancel_during_sleep):
-            with pytest.raises(asyncio.CancelledError):
-                await _process_simulation(server, sim_id, data)
+        with (
+            patch("resq_mcp.server.asyncio.sleep", side_effect=cancel_during_sleep),
+            pytest.raises(asyncio.CancelledError),
+        ):
+            await _process_simulation(server, sim_id, data)
 
         assert data["status"] == "failed"
         assert data["progress"] == 0.0
@@ -111,8 +113,8 @@ class TestLifespan:
 class TestDtsopRunSimulationCapacity:
     @pytest.mark.asyncio
     async def test_capacity_reached_raises_error(self) -> None:
-        from resq_mcp.dtsop.tools import run_simulation, MAX_SIMULATIONS
         from resq_mcp.dtsop.models import SimulationRequest
+        from resq_mcp.dtsop.tools import MAX_SIMULATIONS, run_simulation
 
         for i in range(MAX_SIMULATIONS):
             simulations[f"SIM-{i}"] = {"status": "processing"}

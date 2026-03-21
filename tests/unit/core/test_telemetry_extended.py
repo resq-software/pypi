@@ -38,7 +38,7 @@ class TestSanitizeAttrs:
             "safe": "hello world",
         })
         assert result["api_key"] == "[REDACTED]"
-        assert result["auth_token"] == "[REDACTED]"
+        assert result["auth_token"] == "[REDACTED]"  # noqa: S105
         assert result["safe"] == "hello world"
 
     def test_redacts_bearer_in_string_values(self) -> None:
@@ -172,9 +172,8 @@ class TestSpanContextManager:
     def test_span_records_exception(self) -> None:
         from resq_mcp.core.telemetry import span
 
-        with pytest.raises(ValueError):
-            with span("error-span"):
-                raise ValueError("boom")
+        with pytest.raises(ValueError), span("error-span"):
+            raise ValueError("boom")
 
 
 class TestLogEvent:
