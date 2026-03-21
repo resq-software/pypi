@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v1.0.3 (2026-03-21)
+
+### Performance Improvements
+
+- **ci**: Enable uv dependency caching in CI
+  ([`16f2c16`](https://github.com/resq-software/mcp/commit/16f2c16bde13e9e37f68fb8a5caabcea8603667f))
+
+Adds enable-cache: true to all setup-uv steps, reducing dependency installation time across lint,
+  typecheck, security, and test jobs.
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+
 ## v1.0.2 (2026-03-21)
 
 ### Bug Fixes
