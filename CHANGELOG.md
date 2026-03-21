@@ -1,6 +1,25 @@
 # CHANGELOG
 
 
+## v1.0.1 (2026-03-21)
+
+### Bug Fixes
+
+- **ci**: Pin actions to SHA hashes and add permissions
+  ([`6040035`](https://github.com/resq-software/mcp/commit/6040035a66ef63da44b491dfa786c38aa305ecd7))
+
+Resolves code scanning alerts for unpinned actions and missing permissions blocks.
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+### Code Style
+
+- Format Python files with ruff
+  ([`ce0ef54`](https://github.com/resq-software/mcp/commit/ce0ef545f1405471b2e176a6d8711a325d5adab1))
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+
 ## v1.0.0 (2026-03-18)
 
 ### Features
