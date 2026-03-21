@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v1.0.4 (2026-03-21)
+
+### Performance Improvements
+
+- **ci**: Sync directly to monorepo main instead of creating PRs
+  ([`5f261f4`](https://github.com/resq-software/mcp/commit/5f261f45c9165bcb5561848a3a746d5b78015b5f))
+
+Eliminates redundant monorepo CI runs on sync PRs. Satellite CI already validates the code before
+  sync.
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+
 ## v1.0.3 (2026-03-21)
 
 ### Performance Improvements
