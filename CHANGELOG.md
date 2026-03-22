@@ -1,6 +1,22 @@
 # CHANGELOG
 
 
+## v1.1.0 (2026-03-22)
+
+### Features
+
+- Publish Docker image to GHCR and revamp README
+  ([`40b01ab`](https://github.com/resq-software/mcp/commit/40b01abe99925dfb1b37ec2e7bf63ab420546d7d))
+
+Add GHCR login and push tags to the release workflow so the container image appears under the repo's
+  Packages sidebar alongside Docker Hub.
+
+Restructure README with Playwright-inspired collapsible client setup sections (VS Code, Claude
+  Desktop, Claude Code, Cursor, Windsurf, Docker) and add Docker/GHCR badges.
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+
 ## v1.0.4 (2026-03-21)
 
 ### Performance Improvements
