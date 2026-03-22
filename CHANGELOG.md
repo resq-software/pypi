@@ -1,6 +1,23 @@
 # CHANGELOG
 
 
+## v1.1.1 (2026-03-22)
+
+### Bug Fixes
+
+- Address PR #7 review findings across workflows and source
+  ([`d85460d`](https://github.com/resq-software/mcp/commit/d85460dd370d38ab79be64871d4484cb5fd45a83))
+
+Workflows: - publish.yml: gate publish-pypi on sign + attestation completion - publish.yml: SBOM now
+  scans built artifacts (dist/) not source tree - ci.yml: skip TestPyPI on fork PRs (OIDC tokens
+  unavailable) - sync-to-mono.yml: remove duplicated commit+push step
+
+Source: - errors.py: add default=str to json.dumps to prevent serialization crash - pdie/models.py:
+  add Pydantic field constraints (ge/le/gt) on risk scores, probability, and forecast_horizon_hours
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+
 ## v1.1.0 (2026-03-22)
 
 ### Features
