@@ -48,9 +48,9 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/resq-software/mcp"
-Changelog = "https://github.com/resq-software/mcp/blob/main/CHANGELOG.md"
-Issues = "https://github.com/resq-software/mcp/issues"
+Repository = "https://github.com/resq-software/pypi"
+Changelog = "https://github.com/resq-software/pypi/blob/main/CHANGELOG.md"
+Issues = "https://github.com/resq-software/pypi/issues"
 
 [project.scripts]
 resq-mcp = "resq_mcp.server:main"

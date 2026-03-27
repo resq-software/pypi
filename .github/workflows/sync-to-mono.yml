@@ -45,5 +45,5 @@ jobs:
             exit 0
           fi
           SHORT="${STANDALONE_SHA:0:7}"
-          git commit -m "chore(mcp): sync from resq-software/mcp@${SHORT}"
+          git commit -m "chore(mcp): sync from resq-software/pypi@${SHORT}"
           git push origin main

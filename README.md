@@ -1,9 +1,9 @@
 # ResQ MCP: Disaster Response Intelligence for AI
 
-[![CI](https://img.shields.io/github/actions/workflow/status/resq-software/mcp/ci.yml?branch=main&label=ci&style=flat-square)](https://github.com/resq-software/mcp/actions)
+[![CI](https://img.shields.io/github/actions/workflow/status/resq-software/pypi/ci.yml?branch=main&label=ci&style=flat-square)](https://github.com/resq-software/pypi/actions)
 [![PyPI](https://img.shields.io/pypi/v/resq-mcp?style=flat-square)](https://pypi.org/project/resq-mcp/)
 [![Docker](https://img.shields.io/docker/v/resqsoftware/mcp?label=docker&style=flat-square)](https://hub.docker.com/r/resqsoftware/mcp)
-[![GHCR](https://img.shields.io/badge/ghcr.io-resq--software%2Fmcp-blue?style=flat-square)](https://github.com/resq-software/mcp/pkgs/container/mcp)
+[![GHCR](https://img.shields.io/badge/ghcr.io-resq--software%2Fmcp-blue?style=flat-square)](https://github.com/resq-software/pypi/pkgs/container/mcp)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=flat-square)](./LICENSE)
 
 A production-ready Model Context Protocol (MCP) server that connects AI agents to the ResQ platform's robotics, physics simulations, and disaster telemetry.
@@ -147,7 +147,7 @@ Run the server as a container in SSE mode:
 Or pull from GitHub Container Registry:
 
 ```bash
-docker pull ghcr.io/resq-software/mcp:latest
+docker pull ghcr.io/resq-software/pypi:latest
 ```
 
 To run as a long-lived SSE service:
@@ -184,7 +184,7 @@ docker build -t resq-mcp .
 <summary>Local development</summary>
 
 ```bash
-git clone https://github.com/resq-software/mcp.git
+git clone https://github.com/resq-software/pypi.git
 cd mcp
 uv sync
 uv run resq-mcp
