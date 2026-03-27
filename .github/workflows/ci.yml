@@ -18,8 +18,11 @@ jobs:
           python-version: "3.13"
           enable-cache: true
       - run: uv sync
+        working-directory: packages/resq-mcp
       - run: uv run ruff check src/ tests/
+        working-directory: packages/resq-mcp
       - run: uv run ruff format --check src/ tests/
+        working-directory: packages/resq-mcp
 
   typecheck:
     name: Type Check
@@ -31,7 +34,9 @@ jobs:
           python-version: "3.13"
           enable-cache: true
       - run: uv sync
+        working-directory: packages/resq-mcp
       - run: uv run mypy src/
+        working-directory: packages/resq-mcp
 
   security:
     name: Security (Bandit)
@@ -43,7 +48,9 @@ jobs:
           python-version: "3.13"
           enable-cache: true
       - run: uv sync
+        working-directory: packages/resq-mcp
       - run: uv run ruff check --select S --ignore S104 src/ tests/
+        working-directory: packages/resq-mcp
 
   test:
     name: Test (Python ${{ matrix.python-version }})
@@ -60,7 +67,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
       - run: uv sync
+        working-directory: packages/resq-mcp
       - run: uv run pytest tests/ -v --cov=src --cov-report=xml --cov-report=html
+        working-directory: packages/resq-mcp
       - name: Upload coverage to Codecov
         if: matrix.python-version == '3.13' && always()
         uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5
@@ -71,7 +80,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: coverage-report
-          path: htmlcov/
+          path: packages/resq-mcp/htmlcov/
 
   build-verify:
     name: Build Verification
@@ -84,19 +93,22 @@ jobs:
           python-version: "3.13"
           enable-cache: true
       - run: uv sync
+        working-directory: packages/resq-mcp
       - run: uv run python -m build
+        working-directory: packages/resq-mcp
       - run: uv run twine check dist/*
+        working-directory: packages/resq-mcp
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: dist
-          path: dist/
+          path: packages/resq-mcp/dist/
 
   docker:
     name: Docker Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      - run: docker build -t resq-mcp:test .
+      - run: docker build -t resq-mcp:test -f packages/resq-mcp/Dockerfile packages/resq-mcp
 
   test-pypi:
     name: TestPyPI Publish
@@ -116,7 +128,9 @@ jobs:
           python-version: "3.13"
           enable-cache: true
       - run: uv sync
+        working-directory: packages/resq-mcp
       - name: Patch version for TestPyPI
+        working-directory: packages/resq-mcp
         run: |
           # Inject .devN suffix into pyproject.toml BEFORE building.
           # This ensures the internal metadata matches the filename.
@@ -124,7 +138,10 @@ jobs:
           VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
           sed -i "s/^version = .*/version = \"${VERSION}.dev${{ github.run_number }}\"/" pyproject.toml
       - run: uv run python -m build
+        working-directory: packages/resq-mcp
       - run: uv run twine check dist/*
+        working-directory: packages/resq-mcp
       - uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
+          packages-dir: packages/resq-mcp/dist/

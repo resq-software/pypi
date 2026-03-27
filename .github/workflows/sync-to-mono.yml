@@ -3,9 +3,8 @@ name: Sync to Monorepo
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - ".github/**"
-      - ".gitignore"
+    paths:
+      - "packages/**"
 
 permissions: {}
 
@@ -29,7 +28,7 @@ jobs:
             --exclude='.git/' \
             --exclude='.github/' \
             --exclude='.gitignore' \
-            standalone/ \
+            standalone/packages/resq-mcp/ \
             monorepo/libs/python/mcp/
 
       - name: Commit and push to monorepo

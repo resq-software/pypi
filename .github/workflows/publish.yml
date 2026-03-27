@@ -34,6 +34,7 @@ jobs:
         uses: python-semantic-release/python-semantic-release@0dc72ac9058a62054a45f6344c83a423d7f906a8 # v9
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          directory: packages/resq-mcp
 
   build:
     name: Build
@@ -50,17 +51,20 @@ jobs:
           python-version: "3.13"
 
       - run: uv sync
+        working-directory: packages/resq-mcp
 
       - name: Build sdist and wheel
         run: uv run python -m build
+        working-directory: packages/resq-mcp
 
       - name: Verify distributions
         run: uv run twine check dist/*
+        working-directory: packages/resq-mcp
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: dist
-          path: dist/
+          path: packages/resq-mcp/dist/
 
   sign:
     name: Sign Artifacts
@@ -229,6 +233,8 @@ jobs:
 
       - uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7
         with:
+          context: packages/resq-mcp
+          file: packages/resq-mcp/Dockerfile
           push: true
           tags: |
             resqsoftware/mcp:latest

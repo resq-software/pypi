@@ -15,19 +15,19 @@
 # Area labels
 "area:tools":
   - changed-files:
-    - any-glob-to-any-file: src/resq_mcp/tools/**/*
+    - any-glob-to-any-file: packages/resq-mcp/src/resq_mcp/tools/**/*
 
 "area:resources":
   - changed-files:
-    - any-glob-to-any-file: src/resq_mcp/resources/**/*
+    - any-glob-to-any-file: packages/resq-mcp/src/resq_mcp/resources/**/*
 
 "area:prompts":
   - changed-files:
-    - any-glob-to-any-file: src/resq_mcp/prompts/**/*
+    - any-glob-to-any-file: packages/resq-mcp/src/resq_mcp/prompts/**/*
 
 "area:tests":
   - changed-files:
-    - any-glob-to-any-file: tests/**/*
+    - any-glob-to-any-file: packages/resq-mcp/tests/**/*
 
 # Governance & CI
 "A-DevOps":
