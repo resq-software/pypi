@@ -1,6 +1,25 @@
 # CHANGELOG
 
 
+## v1.2.1 (2026-03-28)
+
+### Bug Fixes
+
+- **ci**: Add resq-dsa CI and publish workflow, scope Docker to resq-mcp
+  ([`74a84c9`](https://github.com/resq-software/pypi/commit/74a84c92748458cf1e4fed1ac50a397625101958))
+
+- Create publish-dsa.yml for tag-based PyPI publishing of resq-dsa - Create ci-dsa.yml for resq-dsa
+  lint/test/typecheck - Add path filters to existing ci.yml to only trigger for resq-mcp changes -
+  Docker builds now scoped to resq-mcp changes only
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
+### Documentation
+
+- Comprehensive workspace README, AGENTS.md, and CLAUDE.md
+  ([`377e17e`](https://github.com/resq-software/pypi/commit/377e17e8143ad0bc2b7808c3c3e23b9cb9ffc120))
+
+
 ## v1.2.0 (2026-03-27)
 
 ### Bug Fixes
