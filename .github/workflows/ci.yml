@@ -3,7 +3,11 @@ name: CI
 on:
   push:
     branches: [main]
+    paths:
+      - 'packages/resq-mcp/**'
   pull_request:
+    paths:
+      - 'packages/resq-mcp/**'
 
 permissions: {}
 
