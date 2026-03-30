@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # Copyright 2026 ResQ
 #
@@ -14,5 +14,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -euo pipefail
-exec "$(dirname "$0")/scripts/setup.sh" "$@"
+ROOT_DIR=$(git rev-parse --show-toplevel)
+source "$ROOT_DIR/resq" "$@"
