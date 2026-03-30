@@ -1,11 +1,18 @@
 # ResQ PyPI Packages
 
-[![CI](https://img.shields.io/github/actions/workflow/status/resq-software/pypi/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/resq-software/pypi/actions)
+[![CI](https://img.shields.io/github/actions/workflow/status/resq-software/pypi/ci.yml?branch=main&label=ci&style=flat-square)](https://github.com/resq-software/pypi/actions)
 [![resq-mcp](https://img.shields.io/pypi/v/resq-mcp?style=flat-square&label=resq-mcp)](https://pypi.org/project/resq-mcp/)
 [![resq-dsa](https://img.shields.io/pypi/v/resq-dsa?style=flat-square&label=resq-dsa)](https://pypi.org/project/resq-dsa/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square)](LICENSE)
 
-Repository for all ResQ Python packages published to [PyPI](https://pypi.org/).
+> FastMCP server and DSA utilities for the ResQ platform, published to PyPI.
+
+## Packages
+
+| Package | Install | Version |
+|---------|---------|---------|
+| `resq-mcp` | `pip install resq-mcp` | [![PyPI](https://img.shields.io/pypi/v/resq-mcp?style=flat-square)](https://pypi.org/project/resq-mcp/) |
+| `resq-dsa` | `pip install resq-dsa` | [![PyPI](https://img.shields.io/pypi/v/resq-dsa?style=flat-square)](https://pypi.org/project/resq-dsa/) |
 
 ## Packages
 
