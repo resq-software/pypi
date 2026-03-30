@@ -2,6 +2,28 @@
 
 <!-- version list -->
 
+## v1.2.2 (2026-03-30)
+
+### Bug Fixes
+
+- **changelog**: Add version list insertion marker for semantic-release v10
+  ([`5b51067`](https://github.com/resq-software/pypi/commit/5b510671873f2000e3d532920f75ef650dcb03cb))
+
+### Chores
+
+- **deps**: Bump actions/attest-build-provenance from 2.4.0 to 4.1.0
+  ([`7762232`](https://github.com/resq-software/pypi/commit/7762232df1db0a1410a7ae3529b8884d891ed158))
+
+- **deps**: Bump actions/upload-artifact from 4.6.2 to 7.0.0
+  ([`2951cea`](https://github.com/resq-software/pypi/commit/2951cea58d024ca6490d69547236f60a94f0f347))
+
+- **deps**: Bump python-semantic-release/python-semantic-release
+  ([`320cad2`](https://github.com/resq-software/pypi/commit/320cad2a7fa6e0a7cd85878903c7acb6a725f056))
+
+- **deps**: Bump the uv group across 1 directory with 2 updates
+  ([`559cc7e`](https://github.com/resq-software/pypi/commit/559cc7ed23e7288d423a64f1898378af7c535452))
+
+
 ## v1.2.1 (2026-03-28)
 
 ### Bug Fixes
