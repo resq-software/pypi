@@ -1,0 +1,4 @@
+# file: /home/wombocombo/github/wrk/mcp/src/resq_mcp/hce/tools.py
+# hypothesis_version: 6.151.9
+
+[0.5, 0.9, 'CONFIRMED', 'Dynamic-Assigned', 'Incident %s %s by %s', 'REJECTED', 'autonomous_flight', 'dispatched_at', 'dispatched_at_mono', 'is_confirmed', 'is_urgent', 'mission_id', 'notes', 'resq-mcp', 'strategy_hash', 'strategy_id', 'validated_at', 'validated_at_mono', 'validation_source']

@@ -1,0 +1,4 @@
+# file: /home/wombocombo/github/wrk/mcp/src/resq_mcp/core/telemetry.py
+# hypothesis_version: 6.151.9
+
+[1024, 5000, 15000, 30000, '(?i)bearer\\s+\\S+', '-', '.', '016x', '032x', '1', 'ERROR', 'OK', 'P', 'R', 'UNSET', '[REDACTED]', '_', 'api_key', 'authorization', 'code.function', 'code.namespace', 'credential', 'development', 'error.type', 'event', 'key', 'lat', 'latitude', 'lng', 'lon', 'longitude', 'password', 'private_key', 'production', 'resq-mcp', 'resq.api_key', 'resq.mcp.tool.errors', 'resq.result', 'resq.safe_mode', 'resq_mcp.telemetry', 's', 'secret', 'service.name', 'service.version', 'shutdown', 'span_id', 'token', 'tool', 'trace_id', '…']

@@ -1,0 +1,4 @@
+# file: /home/wombocombo/github/wrk/mcp/src/resq_mcp/pdie/service.py
+# hypothesis_version: 6.151.9
+
+[0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.8, 0.9, 'Sector-1', 'Sector-2', 'Sector-3', 'Sector-4', 'bridge', 'flood', 'high', 'hospital', 'low', 'medium', 'power-substation', 'school', 'warehouse-district', 'wildfire']

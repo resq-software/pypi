@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "Bash(git checkout:*)",
+      "Bash(git -C /home/wombocombo/github/wrk/mcp branch --show-current)",
+      "Bash(uv sync:*)",
+      "Read(//home/wombocombo/.cargo/bin/**)",
+      "Read(//home/wombocombo/.local/bin/**)",
+      "Read(//home/wombocombo/**)",
+      "Bash(/home/wombocombo/.local/bin/uv sync:*)",
+      "Bash(/home/wombocombo/.local/bin/uv run:*)",
+      "Bash(uv run:*)",
+      "Bash(~/.local/bin/uv run:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(echo \"PATH=$PATH\")",
+      "Bash(export PATH=\"$HOME/.local/bin:$PATH\")",
+      "Bash(git fetch:*)",
+      "Bash(git push:*)",
+      "Bash(git rm:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:hub.docker.com)",
+      "Bash(for pr:*)",
+      "Bash(do echo:*)",
+      "Bash(done)",
+      "Bash(gh issue:*)",
+      "Bash(python3 -c ':*)",
+      "Bash(grep -n 'actions/attest-build-provenance' .github/workflows/*.yml)",
+      "Bash(grep -n 'actions/upload-artifact' .github/workflows/*.yml)",
+      "Bash(grep -n 'actions/download-artifact' .github/workflows/*.yml)",
+      "Bash(grep -n 'python-semantic-release/python-semantic-release' .github/workflows/*.yml)",
+      "Bash(grep -n 'python-semantic-release/publish-action' .github/workflows/*.yml)",
+      "Bash(git remote:*)",
+      "Bash(git cherry-pick:*)",
+      "Bash(git reset:*)"
+    ]
+  }
+}
