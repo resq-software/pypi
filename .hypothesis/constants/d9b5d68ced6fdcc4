@@ -1,4 +1,0 @@
-# file: /home/wombocombo/github/wrk/mcp/src/resq_mcp/core/timeout.py
-# hypothesis_version: 6.151.9
-
-['1.0', '20.0', '30', '30.0', '5.0', 'RESQ_CONNECT_TIMEOUT', 'RESQ_READ_TIMEOUT', 'RESQ_REQUEST_TIMEOUT']
