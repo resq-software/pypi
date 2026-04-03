@@ -1,17 +1,9 @@
-name: CI (resq-mcp)
+name: CI
 
 on:
   push:
     branches: [main]
-    paths:
-      - 'src/**'
-      - 'tests/**'
-      - 'pyproject.toml'
   pull_request:
-    paths:
-      - 'src/**'
-      - 'tests/**'
-      - 'pyproject.toml'
 
 permissions: {}
 
@@ -19,6 +11,13 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: resq-mcp
+            dir: .
+          - name: resq-dsa
+            dir: packages/resq-dsa
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
@@ -26,12 +25,22 @@ jobs:
           python-version: "3.13"
           enable-cache: true
       - run: uv sync
+        working-directory: ${{ matrix.dir }}
       - run: uv run ruff check src/ tests/
+        working-directory: ${{ matrix.dir }}
       - run: uv run ruff format --check src/ tests/
+        working-directory: ${{ matrix.dir }}
 
   typecheck:
     name: Type Check
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: resq-mcp
+            dir: .
+          - name: resq-dsa
+            dir: packages/resq-dsa
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
@@ -39,16 +48,25 @@ jobs:
           python-version: "3.13"
           enable-cache: true
       - run: uv sync
+        working-directory: ${{ matrix.dir }}
       - run: uv run mypy src/
+        working-directory: ${{ matrix.dir }}
 
   test:
-    name: Test (Python ${{ matrix.python-version }})
+    name: Test (${{ matrix.pkg }} / ${{ matrix.python-version }})
     needs: [lint, typecheck]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.11", "3.12", "3.13"]
+        include:
+          - pkg: resq-mcp
+            dir: .
+            cov: --cov=src --cov-report=xml
+          - pkg: resq-dsa
+            dir: packages/resq-dsa
+            cov: ""
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
@@ -56,18 +74,26 @@ jobs:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
       - run: uv sync
-      - run: uv run pytest tests/ -v --cov=src --cov-report=xml
+        working-directory: ${{ matrix.dir }}
+      - run: uv run pytest tests/ -v ${{ matrix.cov }}
+        working-directory: ${{ matrix.dir }}
 
   build:
-    name: Build Verification
+    name: Build (${{ matrix.pkg }})
     needs: [test]
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - pkg: resq-mcp
+            dir: .
+          - pkg: resq-dsa
+            dir: packages/resq-dsa
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
         with:
           python-version: "3.13"
           enable-cache: true
-      - run: uv sync
       - run: uv build
-      - run: uv run twine check dist/*
+        working-directory: ${{ matrix.dir }}
