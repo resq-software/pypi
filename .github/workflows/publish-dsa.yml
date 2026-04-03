@@ -1,9 +1,11 @@
-name: Publish resq-dsa
+name: Release (resq-dsa)
 
 on:
   push:
-    tags:
-      - 'resq-dsa@v*'
+    branches: [main]
+    paths:
+      - 'packages/resq-dsa/src/**'
+      - 'packages/resq-dsa/pyproject.toml'
   workflow_dispatch:
 
 permissions:
@@ -12,8 +14,37 @@ permissions:
   attestations: write
 
 jobs:
+  check-version:
+    name: Check Version Change
+    runs-on: ubuntu-latest
+    outputs:
+      should_publish: ${{ steps.check.outputs.should_publish }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Check if version is new
+        id: check
+        run: |
+          VERSION=$(grep '^version = ' packages/resq-dsa/pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://pypi.org/pypi/resq-dsa/$VERSION/json")
+          if [ "$STATUS" = "404" ]; then
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
     name: Build
+    needs: check-version
+    if: needs.check-version.outputs.should_publish == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -31,24 +62,10 @@ jobs:
           name: dist
           path: packages/resq-dsa/dist/
 
-  sign:
-    name: Sign Artifacts
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
-        with:
-          name: dist
-          path: dist/
-
-      - name: Sign with Sigstore
-        uses: sigstore/gh-action-sigstore-python@a5caf349bc536fbef3668a10ed7f5cd309a4b53d # v3.2.0
-        with:
-          inputs: ./dist/*.tar.gz ./dist/*.whl
-
   attestation:
     name: Generate Attestation
-    needs: build
+    needs: [check-version, build]
+    if: needs.check-version.outputs.should_publish == 'true'
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -64,20 +81,14 @@ jobs:
         with:
           subject-path: dist/*
 
-      - name: Verify attestation
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          for f in dist/*.whl dist/*.tar.gz; do
-            echo "Verifying attestation for $(basename "$f")..."
-            gh attestation verify "$f" --repo "${{ github.repository }}"
-          done
-
   publish:
     name: Publish to PyPI
-    needs: [build, sign, attestation]
+    needs: [check-version, build, attestation]
+    if: needs.check-version.outputs.should_publish == 'true'
     runs-on: ubuntu-latest
     environment: pypi
+    permissions:
+      id-token: write
     steps:
       - uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
         with:
@@ -85,5 +96,3 @@ jobs:
           path: dist/
 
       - uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # release/v1
-        with:
-          password: ${{ secrets.PYPI_TOKEN }}
