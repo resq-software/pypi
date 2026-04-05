@@ -7,9 +7,8 @@ meets its expected Big-O complexity guarantees.
 import random
 
 import big_o
-import pytest
 
-from resq_dsa import BloomFilter, CountMinSketch, Graph, BoundedHeap, Trie
+from resq_dsa import BloomFilter, BoundedHeap, CountMinSketch, Graph, Trie
 
 
 def _assert_complexity(name, func, generator, expected_classes, min_n=100, max_n=10000):
@@ -95,7 +94,7 @@ class TestBoundedHeapComplexity:
         def func(n):
             n = int(n)
             heap = BoundedHeap(limit=n, dist=lambda x: x)
-            for i in range(n):
+            for _i in range(n):
                 heap.insert(random.random())
 
         _assert_complexity(

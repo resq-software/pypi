@@ -9,7 +9,7 @@ permissions: {}
 
 jobs:
   lint:
-    name: Lint
+    name: Lint (${{ matrix.name }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -32,7 +32,7 @@ jobs:
         working-directory: ${{ matrix.dir }}
 
   typecheck:
-    name: Type Check
+    name: Type Check (${{ matrix.name }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -53,18 +53,19 @@ jobs:
         working-directory: ${{ matrix.dir }}
 
   test:
-    name: Test (${{ matrix.pkg }} / ${{ matrix.python-version }})
+    name: Test (${{ matrix.name }} / ${{ matrix.python-version }})
     needs: [lint, typecheck]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
+        name: [resq-mcp, resq-dsa]
         python-version: ["3.11", "3.12", "3.13"]
         include:
-          - pkg: resq-mcp
+          - name: resq-mcp
             dir: packages/resq-mcp
             cov: --cov=src --cov-report=xml
-          - pkg: resq-dsa
+          - name: resq-dsa
             dir: packages/resq-dsa
             cov: ""
     steps:
@@ -79,15 +80,15 @@ jobs:
         working-directory: ${{ matrix.dir }}
 
   build:
-    name: Build (${{ matrix.pkg }})
+    name: Build (${{ matrix.name }})
     needs: [test]
     runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
-          - pkg: resq-mcp
+          - name: resq-mcp
             dir: packages/resq-mcp
-          - pkg: resq-dsa
+          - name: resq-dsa
             dir: packages/resq-dsa
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
