@@ -168,7 +168,7 @@ def rabin_karp(text: str, pattern: str) -> list[int]:
     for i in range(1, m):
         pw[i] = pw[i - 1] * BASE % MOD
 
-    def cv(s, i):
+    def cv(s: str, i: int) -> int:
         return ord(s[i]) + 1
 
     ph = wh = 0

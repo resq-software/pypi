@@ -33,6 +33,7 @@ def _assert_complexity(name, func, generator, expected_classes, min_n=100, max_n
 # BloomFilter
 # ---------------------------------------------------------------------------
 
+
 class TestBloomFilterComplexity:
     def test_add_is_o1(self):
         """BloomFilter.add should be O(1) per operation -> O(n) total."""
@@ -43,7 +44,9 @@ class TestBloomFilterComplexity:
                 bf.add(f"item-{i}")
 
         _assert_complexity(
-            "BloomFilter.add", func, lambda n: n,
+            "BloomFilter.add",
+            func,
+            lambda n: n,
             ["Linear", "Linearithmic"],
         )
 
@@ -59,7 +62,9 @@ class TestBloomFilterComplexity:
                 bf.has(f"item-{i}")
 
         _assert_complexity(
-            "BloomFilter.has", func, lambda n: n,
+            "BloomFilter.has",
+            func,
+            lambda n: n,
             ["Linear", "Linearithmic"],
         )
 
@@ -67,6 +72,7 @@ class TestBloomFilterComplexity:
 # ---------------------------------------------------------------------------
 # CountMinSketch
 # ---------------------------------------------------------------------------
+
 
 class TestCountMinSketchComplexity:
     def test_increment_is_o1(self):
@@ -78,7 +84,9 @@ class TestCountMinSketchComplexity:
                 cms.increment(f"item-{i}", 1)
 
         _assert_complexity(
-            "CountMinSketch.increment", func, lambda n: n,
+            "CountMinSketch.increment",
+            func,
+            lambda n: n,
             ["Linear", "Linearithmic"],
         )
 
@@ -86,6 +94,7 @@ class TestCountMinSketchComplexity:
 # ---------------------------------------------------------------------------
 # BoundedHeap
 # ---------------------------------------------------------------------------
+
 
 class TestBoundedHeapComplexity:
     def test_insert_is_ologn(self):
@@ -98,7 +107,9 @@ class TestBoundedHeapComplexity:
                 heap.insert(random.random())
 
         _assert_complexity(
-            "BoundedHeap.insert", func, lambda n: n,
+            "BoundedHeap.insert",
+            func,
+            lambda n: n,
             ["Linearithmic", "Linear", "Quadratic"],
         )
 
@@ -106,6 +117,7 @@ class TestBoundedHeapComplexity:
 # ---------------------------------------------------------------------------
 # Graph
 # ---------------------------------------------------------------------------
+
 
 class TestGraphComplexity:
     def test_dijkstra_chain(self):
@@ -119,7 +131,9 @@ class TestGraphComplexity:
             g.dijkstra(0, n)
 
         _assert_complexity(
-            "Graph.dijkstra (chain)", func, lambda n: n,
+            "Graph.dijkstra (chain)",
+            func,
+            lambda n: n,
             ["Linearithmic", "Linear", "Quadratic"],
             min_n=50,
             max_n=5000,
@@ -136,7 +150,9 @@ class TestGraphComplexity:
             g.bfs(0)
 
         _assert_complexity(
-            "Graph.bfs (chain)", func, lambda n: n,
+            "Graph.bfs (chain)",
+            func,
+            lambda n: n,
             ["Linear", "Linearithmic"],
         )
 
@@ -144,6 +160,7 @@ class TestGraphComplexity:
 # ---------------------------------------------------------------------------
 # Trie
 # ---------------------------------------------------------------------------
+
 
 class TestTrieComplexity:
     def test_insert_fixed_length_keys(self):
@@ -156,7 +173,9 @@ class TestTrieComplexity:
                 trie.insert(f"key-{i:08d}")
 
         _assert_complexity(
-            "Trie.insert", func, lambda n: n,
+            "Trie.insert",
+            func,
+            lambda n: n,
             ["Linear", "Linearithmic"],
         )
 
@@ -173,6 +192,8 @@ class TestTrieComplexity:
                 trie.search(keys[i % len(keys)])
 
         _assert_complexity(
-            "Trie.search", func, lambda n: n,
+            "Trie.search",
+            func,
+            lambda n: n,
             ["Linear", "Linearithmic", "Constant"],
         )

@@ -45,7 +45,7 @@ class Graph:
 
     def __init__(self) -> None:
         """Initialize an empty graph."""
-        self._adj: dict = {}
+        self._adj: dict[object, list[tuple[object, float]]] = {}
         self._counter = 0
 
     def add_edge(self, from_: object, to: object, weight: float = 1.0) -> None:
@@ -62,7 +62,7 @@ class Graph:
         """
         self._adj.setdefault(from_, []).append((to, weight))
 
-    def bfs(self, start: object) -> list:
+    def bfs(self, start: object) -> list[object]:
         """Perform Breadth-First Search from start node.
 
         Returns nodes in order of distance from start (unweighted).
@@ -90,7 +90,7 @@ class Graph:
                     queue.append(nb)
         return result
 
-    def dijkstra(self, start: object, end: object) -> dict | None:
+    def dijkstra(self, start: object, end: object) -> dict[str, object] | None:
         """Find shortest path using Dijkstra's algorithm.
 
         Computes the minimum cost path between start and end nodes.
@@ -110,8 +110,8 @@ class Graph:
             >>> g.dijkstra("A", "C")
             {'path': ['A', 'B', 'C'], 'cost': 3.0}
         """
-        dist: dict = {start: 0.0}
-        prev: dict = {}
+        dist: dict[object, float] = {start: 0.0}
+        prev: dict[object, object] = {}
         self._counter += 1
         pq = [(0.0, self._counter, start)]
         while pq:
@@ -138,7 +138,7 @@ class Graph:
 
     def astar(
         self, start: object, end: object, h: Callable[[object, object], float]
-    ) -> dict | None:
+    ) -> dict[str, object] | None:
         """Find shortest path using A* algorithm.
 
         Uses a heuristic function to guide the search toward the goal.
@@ -160,8 +160,8 @@ class Graph:
             >>> g.astar("A", "C", h)
             {'path': ['A', 'B', 'C'], 'cost': 3.0}
         """
-        g: dict = {start: 0.0}
-        prev: dict = {}
+        g: dict[object, float] = {start: 0.0}
+        prev: dict[object, object] = {}
         self._counter += 1
         pq = [(h(start, end), 0.0, self._counter, start)]
         while pq:
