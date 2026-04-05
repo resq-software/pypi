@@ -18,6 +18,14 @@
 
 <!-- version list -->
 
+## v1.3.2 (2026-04-05)
+
+### Bug Fixes
+
+- Resq-dsa type annotations, formatting, and lint
+  ([`6b59f8f`](https://github.com/resq-software/pypi/commit/6b59f8f3e6ea49f847bc1fb0ac972b645a55f5af))
+
+
 ## v1.3.1 (2026-04-05)
 
 ### Bug Fixes
