@@ -18,66 +18,6 @@
 
 <!-- version list -->
 
-## v1.3.2 (2026-04-05)
-
-### Bug Fixes
-
-- Resq-dsa type annotations, formatting, and lint
-  ([`6b59f8f`](https://github.com/resq-software/pypi/commit/6b59f8f3e6ea49f847bc1fb0ac972b645a55f5af))
-
-
-## v1.3.1 (2026-04-05)
-
-### Bug Fixes
-
-- **ci**: Add resq-mcp README, fix lint errors, fix test matrix
-  ([`c21c2fd`](https://github.com/resq-software/pypi/commit/c21c2fda9c640c32f5c6595adef29df768408d69))
-
-### Chores
-
-- Remove dead symlinks and stale design spec
-  ([`1a94db2`](https://github.com/resq-software/pypi/commit/1a94db2c3d143a203ec14ef80efb876abb93e85f))
-
-### Refactoring
-
-- Move resq-mcp into packages/ for consistent multi-package layout
-  ([`fbc1100`](https://github.com/resq-software/pypi/commit/fbc110000e8c7bc1a095ed3a27ddf0bba86c6bd0))
-
-
-## v1.3.0 (2026-04-03)
-
-### Bug Fixes
-
-- Add LICENSE, update AGENTS.md and CLAUDE.md for flat layout
-  ([`c529491`](https://github.com/resq-software/pypi/commit/c529491a4eb30825f636b04ec4ebf38f67af731d))
-
-### Chores
-
-- Clean repo — remove 175 tracked artifacts, fix .gitignore
-  ([`f18b5d9`](https://github.com/resq-software/pypi/commit/f18b5d9658427dcd74ae4a7f5dbf9c08079281b3))
-
-- Sync from resq-software/resQ@d3f7a3e3519c9191e2fb0ea96aa8a670d3c6852b
-  ([`f5ed70d`](https://github.com/resq-software/pypi/commit/f5ed70d67513130d40393928f9188463a93d7605))
-
-### Continuous Integration
-
-- Add full CI/CD pipeline with automatic OIDC publishing
-  ([`cbb4396`](https://github.com/resq-software/pypi/commit/cbb439670bde5ae0d1ce75712347dc2d75daf710))
-
-- Consolidate into 2 workflows — ci.yml and publish.yml
-  ([`e802ecd`](https://github.com/resq-software/pypi/commit/e802ecdc3617ec76c66bdb3b524a1e63e3b48961))
-
-### Documentation
-
-- Update README
-  ([`c497926`](https://github.com/resq-software/pypi/commit/c497926ccd6d14116ab28a4ed54529e766164180))
-
-### Features
-
-- Restore resq-dsa package and publish workflow
-  ([`d1f203f`](https://github.com/resq-software/pypi/commit/d1f203f47af666707a4128e0a1b361f56ed016ee))
-
-
 ## v1.2.1 (2026-03-28)
 
 ### Bug Fixes
