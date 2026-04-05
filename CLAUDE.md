@@ -1,47 +1,53 @@
-# ResQ MCP Server — Agent Guide
+# ResQ PyPI Packages — Agent Guide
 
 ## Mission
-FastMCP server exposing ResQ platform capabilities (drone fleet, PDIE, DTSOP) to AI clients. Published to PyPI as `resq-mcp`.
+Registry workspace for ResQ Python packages published to PyPI.
 
 ## Stack
 - Runtime: Python 3.11+
 - Build: Hatchling
 - Package Manager: uv
-- Testing: pytest (+ hypothesis for property-based tests)
+- Testing: pytest (+ hypothesis for property-based tests in resq-mcp)
 - Linting: ruff + mypy (strict)
-- Release: python-semantic-release
+- Release: python-semantic-release (resq-mcp), version-check (resq-dsa)
 
 ## Repo Map
-- `src/resq_mcp/` — Server source (core/, models/, tools, server)
-- `tests/` — Unit, integration, and property-based tests
-- `scripts/` — Development scripts
-- `Dockerfile` — Container image
-- `CHANGELOG.md` — Auto-managed by semantic-release
+- `packages/resq-mcp/` — FastMCP server for AI agent integration (drone fleet, PDIE, DTSOP)
+- `packages/resq-dsa/` — Zero-dependency data structures & algorithms (Bloom, CountMin, Graph, Heap, Trie, Rabin-Karp)
 
 ## Commands
 ```bash
-uv sync && uv run pytest
+# resq-mcp
+cd packages/resq-mcp && uv sync && uv run pytest
 uv run ruff check src/ tests/
 uv run mypy src/
+
+# resq-dsa
+cd packages/resq-dsa && uv sync && uv run pytest
+uv run ruff check src/ tests/
 ```
 
 ## Rules
-- Python 3.11+ minimum
+- `resq-dsa` must have zero runtime dependencies — stdlib only
+- Each package has its own `pyproject.toml` and virtual environment
+- Python 3.11+ minimum across all packages
 - ruff for linting, mypy for type checking (strict mode)
 - All source files must include Apache-2.0 license header
 - `AGENTS.md` is the source of truth for `CLAUDE.md` — never edit `CLAUDE.md` directly
 
 ## Safety
-- Safe mode (`RESQ_SAFE_MODE=true`) is default — mutations raise errors
+- Don't add runtime dependencies to `resq-dsa`
 - Don't publish without running full test suite and linting
+- `resq-mcp` safe mode (`RESQ_SAFE_MODE=true`) is default — mutations raise errors
 
 ## Workflow
-1. `uv sync` to install dependencies
-2. `uv run pytest` to test
-3. `uv run ruff check src/ tests/` to lint
-4. Summarize: files changed, behavior change, tests run
+1. `cd` into the specific package directory
+2. `uv sync` to install dependencies
+3. `uv run pytest` to test
+4. `uv run ruff check src/ tests/` to lint
+5. Summarize: files changed, behavior change, tests run
 
 ## References
-- [README](README.md) — Full server documentation
-- [CHANGELOG](CHANGELOG.md) — Release history
-- [SECURITY](SECURITY.md) — Security policy
+- [resq-mcp README](packages/resq-mcp/README.md) — Full MCP server documentation
+- [resq-dsa README](packages/resq-dsa/README.md) — DSA library documentation
+- [README](README.md) — Package overview

@@ -15,7 +15,7 @@ jobs:
       matrix:
         include:
           - name: resq-mcp
-            dir: .
+            dir: packages/resq-mcp
           - name: resq-dsa
             dir: packages/resq-dsa
     steps:
@@ -38,7 +38,7 @@ jobs:
       matrix:
         include:
           - name: resq-mcp
-            dir: .
+            dir: packages/resq-mcp
           - name: resq-dsa
             dir: packages/resq-dsa
     steps:
@@ -62,7 +62,7 @@ jobs:
         python-version: ["3.11", "3.12", "3.13"]
         include:
           - pkg: resq-mcp
-            dir: .
+            dir: packages/resq-mcp
             cov: --cov=src --cov-report=xml
           - pkg: resq-dsa
             dir: packages/resq-dsa
@@ -86,7 +86,7 @@ jobs:
       matrix:
         include:
           - pkg: resq-mcp
-            dir: .
+            dir: packages/resq-mcp
           - pkg: resq-dsa
             dir: packages/resq-dsa
     steps:

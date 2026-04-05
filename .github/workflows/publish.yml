@@ -41,6 +41,7 @@ jobs:
         uses: python-semantic-release/python-semantic-release@350c48fcb3ffcdfd2e0a235206bc2ecea6b69df0 # v10.5.3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          directory: packages/resq-mcp
 
   mcp-build:
     name: "mcp: Build"
@@ -57,13 +58,16 @@ jobs:
           python-version: "3.13"
 
       - run: uv sync
+        working-directory: packages/resq-mcp
       - run: uv build
+        working-directory: packages/resq-mcp
       - run: uv run twine check dist/*
+        working-directory: packages/resq-mcp
 
       - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: mcp-dist
-          path: dist/
+          path: packages/resq-mcp/dist/
 
   mcp-attest:
     name: "mcp: Attestation"
@@ -119,8 +123,8 @@ jobs:
 
       - uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7
         with:
-          context: .
-          file: Dockerfile
+          context: packages/resq-mcp
+          file: packages/resq-mcp/Dockerfile
           push: true
           tags: |
             ghcr.io/resq-software/mcp:latest
