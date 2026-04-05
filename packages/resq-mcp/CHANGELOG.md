@@ -18,6 +18,24 @@
 
 <!-- version list -->
 
+## v1.3.1 (2026-04-05)
+
+### Bug Fixes
+
+- **ci**: Add resq-mcp README, fix lint errors, fix test matrix
+  ([`c21c2fd`](https://github.com/resq-software/pypi/commit/c21c2fda9c640c32f5c6595adef29df768408d69))
+
+### Chores
+
+- Remove dead symlinks and stale design spec
+  ([`1a94db2`](https://github.com/resq-software/pypi/commit/1a94db2c3d143a203ec14ef80efb876abb93e85f))
+
+### Refactoring
+
+- Move resq-mcp into packages/ for consistent multi-package layout
+  ([`fbc1100`](https://github.com/resq-software/pypi/commit/fbc110000e8c7bc1a095ed3a27ddf0bba86c6bd0))
+
+
 ## v1.3.0 (2026-04-03)
 
 ### Bug Fixes
