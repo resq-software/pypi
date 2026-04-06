@@ -1,0 +1,4 @@
+# file: /home/wombocombo/github/wrk/pypi/packages/resq-mcp/src/resq_mcp/core/config.py
+# hypothesis_version: 6.151.10
+
+[8000, '.env', '0.0.0.0', '0.1.0', 'Enable debug logging', 'Host to bind to', 'Port for SSE server', 'RESQ_', 'console', 'ignore', 'jaeger', 'none', 'otlp', 'resQ MCP Server', 'resq-dev-token', 'resq-mcp', 'utf-8']

@@ -1,0 +1,4 @@
+# file: /home/wombocombo/github/wrk/mcp/src/resq_mcp/pdie/models.py
+# hypothesis_version: 6.151.9
+
+[0.0, 1.0, 'high', 'low', 'medium']

@@ -1,0 +1,4 @@
+# file: /home/wombocombo/github/wrk/pypi/packages/resq-mcp/src/resq_mcp/models.py
+# hypothesis_version: 6.151.10
+
+[0.0, 'None', 'critical', 'edge_ai', 'error', 'high', 'human_report', 'low', 'medium', 'sensor_network', 'standard', 'unknown', 'urgent']
