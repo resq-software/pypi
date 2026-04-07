@@ -90,10 +90,15 @@ ensure_nix_env "$@"
 # 3. Docker
 install_docker
 
-# 4. Create virtualenv and install all dependencies via uv
+# 4. Create virtualenvs and install all dependencies via uv
 if command_exists uv; then
     log_info "Syncing Python dependencies..."
-    cd "$PROJECT_ROOT" && uv sync
+    for pkg in "$PROJECT_ROOT"/packages/*/; do
+        if [ -f "$pkg/pyproject.toml" ]; then
+            log_info "  $(basename "$pkg")..."
+            (cd "$pkg" && uv sync)
+        fi
+    done
     log_success "Dependencies synced."
 else
     log_warning "uv not found — run 'nix develop' then 'uv sync'"
@@ -115,8 +120,8 @@ echo "║  ✓ ResQ MCP setup complete               ║"
 echo "╚══════════════════════════════════════════╝"
 echo ""
 echo "Next steps:"
-echo "  nix develop                              # Enter dev shell"
-echo "  uv run resq-mcp                          # Run MCP server (port 8000)"
-echo "  uv run pytest                            # Run tests"
-echo "  docker build -t resq-mcp .               # Build Docker image"
+echo "  nix develop                                          # Enter dev shell"
+echo "  cd packages/resq-mcp && uv run resq-mcp              # Run MCP server"
+echo "  cd packages/resq-mcp && uv run pytest                 # Test resq-mcp"
+echo "  cd packages/resq-dsa && uv run pytest                 # Test resq-dsa"
 echo "  docker run -p 8000:8000 resq-mcp         # Run container"
