@@ -1,4 +1,0 @@
-# file: /home/wombocombo/github/wrk/pypi/packages/resq-mcp/src/resq_mcp/core/errors.py
-# hypothesis_version: 6.151.10
-
-['api_key', 'authorization', 'context', 'cookie', 'details', 'error', 'exception_message', 'exception_type', 'http_status', 'message', 'missing_data', 'password', 'secret', 'success', 'suggestion', 'timeout', 'token', 'type', 'unknown_error', 'validation_error']

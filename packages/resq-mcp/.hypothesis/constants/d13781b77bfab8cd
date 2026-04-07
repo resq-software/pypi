@@ -1,4 +1,0 @@
-# file: /home/wombocombo/github/wrk/pypi/packages/resq-mcp/.venv/bin/pytest
-# hypothesis_version: 6.151.10
-
-['-script.pyw', '.exe', '__main__']

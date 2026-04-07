@@ -1,4 +1,0 @@
-# file: /home/wombocombo/github/wrk/pypi/packages/resq-mcp/src/resq_mcp/resources.py
-# hypothesis_version: 6.151.10
-
-[100, 'N/A', 'failed', 'progress', 'resq://drones/active', 'result_url', 'status']

@@ -69,7 +69,7 @@ def verify_api_key(request: Request) -> str:
         )
 
     if token != settings.API_KEY:
-        logger.warning("Invalid token attempt: %s***", token[:4])
+        logger.warning("Invalid token attempt: %s", "[REDACTED]")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid API Key",

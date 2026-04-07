@@ -1,4 +1,0 @@
-# file: /home/wombocombo/github/wrk/pypi/packages/resq-mcp/src/resq_mcp/prompts.py
-# hypothesis_version: 6.151.10
-
-['^[A-Z0-9\\-]{1,64}$']
