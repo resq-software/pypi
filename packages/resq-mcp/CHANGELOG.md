@@ -18,6 +18,27 @@
 
 <!-- version list -->
 
+## v1.3.3 (2026-04-09)
+
+### Bug Fixes
+
+- **ci**: Accept Polynomial in complexity tests, lower coverage to 85%
+  ([`a2cb90e`](https://github.com/resq-software/pypi/commit/a2cb90e5e791e29417603291ee21d8df07065b64))
+
+### Chores
+
+- Sync from resq-software/resQ@18aafab67c7d86d022e163ef20f008967dc6b4ee
+  ([`b61e05d`](https://github.com/resq-software/pypi/commit/b61e05d8bd985eeaba732d3673a9de0fbfc8cf90))
+
+- Sync from resq-software/resQ@c4dbda0da57f48bdc6f8419405f602602b54647b
+  ([`727513e`](https://github.com/resq-software/pypi/commit/727513e5ebe875100c39d0b6ff0d668eb89ca5c1))
+
+### Refactoring
+
+- Restructure into packages/ workspace layout
+  ([`447f128`](https://github.com/resq-software/pypi/commit/447f128b80c1c7a6c55847cc92916efcf4bf9bae))
+
+
 ## v1.2.1 (2026-03-28)
 
 ### Bug Fixes
