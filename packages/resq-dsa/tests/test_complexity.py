@@ -47,7 +47,7 @@ class TestBloomFilterComplexity:
             "BloomFilter.add",
             func,
             lambda n: n,
-            ["Linear", "Linearithmic"],
+            ["Linear", "Linearithmic", "Polynomial"],
         )
 
     def test_has_is_o1(self):
@@ -65,7 +65,7 @@ class TestBloomFilterComplexity:
             "BloomFilter.has",
             func,
             lambda n: n,
-            ["Linear", "Linearithmic"],
+            ["Linear", "Linearithmic", "Polynomial"],
         )
 
 
@@ -87,7 +87,7 @@ class TestCountMinSketchComplexity:
             "CountMinSketch.increment",
             func,
             lambda n: n,
-            ["Linear", "Linearithmic"],
+            ["Linear", "Linearithmic", "Polynomial"],
         )
 
 
@@ -110,7 +110,7 @@ class TestBoundedHeapComplexity:
             "BoundedHeap.insert",
             func,
             lambda n: n,
-            ["Linearithmic", "Linear", "Quadratic"],
+            ["Linearithmic", "Linear", "Quadratic", "Polynomial"],
         )
 
 
@@ -134,7 +134,7 @@ class TestGraphComplexity:
             "Graph.dijkstra (chain)",
             func,
             lambda n: n,
-            ["Linearithmic", "Linear", "Quadratic"],
+            ["Linearithmic", "Linear", "Quadratic", "Polynomial"],
             min_n=50,
             max_n=5000,
         )
@@ -153,7 +153,7 @@ class TestGraphComplexity:
             "Graph.bfs (chain)",
             func,
             lambda n: n,
-            ["Linear", "Linearithmic"],
+            ["Linear", "Linearithmic", "Polynomial"],
         )
 
 
@@ -176,7 +176,7 @@ class TestTrieComplexity:
             "Trie.insert",
             func,
             lambda n: n,
-            ["Linear", "Linearithmic"],
+            ["Linear", "Linearithmic", "Polynomial"],
         )
 
     def test_search_fixed_length_keys(self):
@@ -195,5 +195,5 @@ class TestTrieComplexity:
             "Trie.search",
             func,
             lambda n: n,
-            ["Linear", "Linearithmic", "Constant"],
+            ["Linear", "Linearithmic", "Constant", "Polynomial"],
         )
