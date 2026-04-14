@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Repo-specific pre-push — runs alongside the canonical ResQ pre-push hook.
+set -euo pipefail
+
+if command -v uv >/dev/null 2>&1; then
+    echo "  Python: uv run ruff check"
+    uv run ruff check .
+elif command -v ruff >/dev/null 2>&1; then
+    echo "  Python: ruff check"
+    ruff check .
+fi

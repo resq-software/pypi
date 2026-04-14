@@ -51,3 +51,14 @@ uv run ruff check src/ tests/
 - [resq-mcp README](packages/resq-mcp/README.md) — Full MCP server documentation
 - [resq-dsa README](packages/resq-dsa/README.md) — DSA library documentation
 - [README](README.md) — Package overview
+
+## Git hooks
+
+Canonical hooks from [`resq-software/dev`](https://github.com/resq-software/dev).
+Install:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/resq-software/dev/main/scripts/install-hooks.sh | sh
+```
+
+Contract: [dev/AGENTS.md#git-hooks](https://github.com/resq-software/dev/blob/main/AGENTS.md#git-hooks). This repo's `.git-hooks/local-pre-push` runs `ruff check` (lint only — formatting is already handled by `resq pre-commit`).
