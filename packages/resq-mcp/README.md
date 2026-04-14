@@ -201,7 +201,7 @@ docker build -t resq-mcp .
 
 ```bash
 git clone https://github.com/resq-software/pypi.git
-cd mcp
+cd pypi/packages/resq-mcp
 uv sync
 uv run resq-mcp
 ```
@@ -303,27 +303,75 @@ Agent: Receives structured template → calls tools → produces:
 
 ---
 
-## Technical Architecture
+## Architecture
 
 ```mermaid
-C4Context
-    title ResQ MCP Integration
-    Person(ai, "AI Client", "Claude / VS Code / Cursor")
-    System_Boundary(resq_boundary, "resq-mcp Server") {
-        System(server, "resq-mcp Server", "FastMCP Interface")
-        System_Boundary(backend, "ResQ Platform") {
-            Component(dtsop, "DTSOP Engine", "Physics/RL Simulations")
-            Component(hce, "HCE Engine", "Coordination Logic")
-            Component(telemetry, "Drone Telemetry", "Real-time Status")
-        }
-    }
-    Rel(ai, server, "Uses MCP (STDIO/SSE)")
-    Rel(server, dtsop, "Executes Simulation")
-    Rel(server, hce, "Validates Incidents")
-    Rel(server, telemetry, "Subscribes to Data")
+graph TB
+    AI["AI Client<br/><i>Claude / VS Code / Cursor</i>"]
+
+    subgraph "resq-mcp Server"
+        SERVER["server.py<br/>FastMCP + Lifespan"]
+        RES["resources.py<br/>Drone fleet, sim status"]
+        PROMPTS["prompts.py<br/>Crisis response templates"]
+
+        subgraph "Domain Engines"
+            HCE["HCE<br/>Hybrid Coordination<br/><i>Incidents & Missions</i>"]
+            DTSOP["DTSOP<br/>Digital Twin<br/><i>Physics Simulations</i>"]
+            PDIE["PDIE<br/>Predictive Intel<br/><i>Vulnerability & Alerts</i>"]
+            DRONE["Drone Fleet<br/><i>Telemetry & Swarm</i>"]
+        end
+
+        subgraph "Core"
+            CFG[Config]
+            SEC[Security]
+            TEL[Telemetry]
+        end
+    end
+
+    AI -->|"MCP (stdio / SSE)"| SERVER
+    SERVER --> HCE
+    SERVER --> DTSOP
+    SERVER --> PDIE
+    SERVER --> DRONE
+    SERVER --> RES
+    SERVER --> PROMPTS
+    HCE --> CFG
+    DTSOP --> CFG
+    SERVER --> SEC
+    SERVER --> TEL
 ```
 
-### Module Overview
+### Request Flow
+
+```mermaid
+sequenceDiagram
+    participant AI as AI Agent
+    participant MCP as resq-mcp
+    participant HCE as HCE Engine
+    participant DTSOP as DTSOP Engine
+
+    AI->>MCP: validate_incident(INC-789)
+    MCP->>HCE: Process validation
+    HCE-->>MCP: IncidentValidation
+    MCP-->>AI: Confirmed + audit log
+
+    AI->>MCP: run_simulation(flood, Sector-3)
+    MCP->>DTSOP: Queue simulation
+    DTSOP-->>MCP: SIM-ABCD (pending)
+    MCP-->>AI: Job ID
+
+    loop SSE subscription
+        AI->>MCP: resq://simulations/SIM-ABCD
+        MCP-->>AI: status: running / completed
+    end
+
+    AI->>MCP: get_deployment_strategy(INC-789)
+    MCP->>DTSOP: RL optimization
+    DTSOP-->>MCP: OptimizationStrategy
+    MCP-->>AI: Deployment plan
+```
+
+### Module Layout
 
 ```
 src/resq_mcp/
