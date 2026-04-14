@@ -1,11 +1,28 @@
 #!/usr/bin/env bash
 # Repo-specific pre-push — runs alongside the canonical ResQ pre-push hook.
+# Each package has its own pyproject.toml; iterate and run ruff per package
+# so we don't rely on root-level config that doesn't exist.
 set -euo pipefail
 
+RUFF=""
 if command -v uv >/dev/null 2>&1; then
-    echo "  Python: uv run ruff check"
-    uv run ruff check .
+    RUFF="uv run ruff"
 elif command -v ruff >/dev/null 2>&1; then
-    echo "  Python: ruff check"
-    ruff check .
+    RUFF="ruff"
 fi
+
+if [ -z "$RUFF" ]; then
+    echo "  skipping ruff check (uv/ruff not installed)"
+    exit 0
+fi
+
+rc=0
+while IFS= read -r -d '' pyproj; do
+    pkg_dir=$(dirname "$pyproj")
+    echo "  Python: $RUFF check $pkg_dir"
+    if ! (cd "$pkg_dir" && $RUFF check .); then
+        rc=1
+    fi
+done < <(find packages -maxdepth 2 -name pyproject.toml -print0 2>/dev/null)
+
+exit $rc
