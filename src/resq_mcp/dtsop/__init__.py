@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 # Copyright 2026 ResQ
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,5 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -euo pipefail
-exec "$(dirname "$0")/scripts/setup.sh" "$@"
+"""DTSOP - Digital Twin Simulation & Optimization Platform package."""
+
+from __future__ import annotations
+
+from resq_mcp.dtsop.models import OptimizationStrategy, SimulationRequest
+from resq_mcp.dtsop.service import get_optimization_strategy, run_simulation
+
+__all__ = [
+    "OptimizationStrategy",
+    "SimulationRequest",
+    "get_optimization_strategy",
+    "run_simulation",
+]

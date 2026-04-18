@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 # Copyright 2026 ResQ
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,5 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -euo pipefail
-exec "$(dirname "$0")/scripts/setup.sh" "$@"
+"""HCE - Hybrid Coordination Engine package."""
+
+from __future__ import annotations
+
+from resq_mcp.hce.models import IncidentReport, IncidentValidation, MissionParameters
+from resq_mcp.hce.service import update_mission_params, validate_incident
+
+__all__ = [
+    "IncidentReport",
+    "IncidentValidation",
+    "MissionParameters",
+    "update_mission_params",
+    "validate_incident",
+]
