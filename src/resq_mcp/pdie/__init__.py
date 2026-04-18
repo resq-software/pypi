@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 # Copyright 2026 ResQ
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,5 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -euo pipefail
-exec "$(dirname "$0")/scripts/setup.sh" "$@"
+"""PDIE - Predictive Disaster Intelligence Engine package."""
+
+from __future__ import annotations
+
+from resq_mcp.pdie.models import PreAlert, VulnerabilityMap
+from resq_mcp.pdie.service import get_predictive_alerts, get_vulnerability_map
+
+__all__ = [
+    "PreAlert",
+    "VulnerabilityMap",
+    "get_predictive_alerts",
+    "get_vulnerability_map",
+]
