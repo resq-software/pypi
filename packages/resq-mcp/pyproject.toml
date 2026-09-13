@@ -37,13 +37,14 @@ dependencies = [
   # >=1.28.1: GHSA advisory on mcp itself. Also constrains starlette and
   # python-multipart, so raising this floor pulls both of those past their
   # own advisories for consumers resolving from PyPI rather than our lock.
-  # <2 caps the SDK major. Redundant while a FastMCP 3.x is selected (3.x already
-  # pins mcp<2), but load-bearing the moment FastMCP 4 ships stable.
-  "mcp>=1.28.1,<2",
-  # >=3.3 matches the locked 3.3.1 -- a freeze, not an upgrade. <4 is the
-  # load-bearing cap: FastMCP 4 requires MCP SDK 2.x, so without it the next
-  # stable major would silently drag the SDK across its own major boundary.
-  "fastmcp>=3.3,<4",
+  # >=2.0 is required by FastMCP 4; <3 keeps the next SDK major an explicit
+  # decision. Supersedes the old >=1.28.1 advisory floor (GHSA-vj7q-gjh5-988w
+  # affects <1.28.1 only, so the 2.x line is clear).
+  "mcp>=2.0,<3",
+  # >=4.0.3 adopts the 2026-07-28 protocol line deliberately rather than merely
+  # permitting it; a >=3.3 floor would let a resolver fall back to 3.x and a
+  # different negotiated protocol. <5 keeps the next major a decision.
+  "fastmcp>=4.0.3,<5",
   # >=3.14.3: GHSA-cq5v-8q36-5273 (OOB heap read in the C HTTP response
   # parser). The lockfile pins this for CI, but published-package consumers
   # resolve against this floor, so it has to exclude the vulnerable range.
