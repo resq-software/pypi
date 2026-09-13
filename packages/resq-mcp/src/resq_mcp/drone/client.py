@@ -108,7 +108,7 @@ async def _error_from_response(resp: aiohttp.ClientResponse) -> ErrorResponse:
     detail: str | None = None
     try:
         payload: Any = await resp.json()
-except (aiohttp.ContentTypeError, ValueError):
+    except (aiohttp.ContentTypeError, ValueError):
         text = await resp.text()
         detail = text.strip() or None
     else:
@@ -153,7 +153,11 @@ async def _request_json(
                 return await _error_from_response(resp)
             try:
                 return await resp.json()
-            except aiohttp.ContentTypeError:
+            except (aiohttp.ContentTypeError, ValueError):
+                # ContentTypeError covers a wrong Content-Type header; ValueError
+                # covers a header that claims JSON over a malformed body, which
+                # raises JSONDecodeError. Both must map to an ErrorResponse or a
+                # bad upstream body escapes as an unhandled exception.
                 return ErrorResponse(message="Fleet API returned a non-JSON body")
     except TimeoutError:
         logger.warning("Fleet API timed out: %s %s", method, url)

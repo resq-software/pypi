@@ -271,3 +271,97 @@ class TestCreateDeploymentHttp:
 
         assert isinstance(result, ErrorResponse)
         assert "No drone is available" in result.message
+
+
+@pytest.mark.usefixtures("_close_session")
+class TestMalformedBodies:
+    """fleet-api sending a body the client cannot parse must still yield ErrorResponse.
+
+    These are the paths that matter when the upstream misbehaves rather than
+    simply failing. A stack trace escaping here would reach the agent instead of
+    an actionable message.
+    """
+
+    async def test_truncated_json_on_success_is_an_error_response(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A 200 labelled application/json over a truncated body must not raise.
+
+        ``resp.json()`` raises JSONDecodeError here, which is a ValueError and
+        NOT an aiohttp.ContentTypeError, so catching only the latter lets it
+        escape ``_request_json``.
+        """
+
+        async def truncated(_request: web.Request) -> web.Response:
+            return web.Response(body=b'{"total_drones": 3', content_type="application/json")
+
+        async with _serve({("GET", "/fleet/status"): truncated}) as origin:
+            monkeypatch.setattr(settings, "FLEET_API_URL", origin)
+            result = await get_drone_swarm_status()
+
+        assert isinstance(result, ErrorResponse)
+        assert "non-JSON" in result.message
+
+    async def test_error_status_with_non_json_body_uses_the_text(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A 502 carrying plain text still produces a message, not a crash.
+
+        Exercises the fallback in ``_error_from_response`` that reads ``text()``
+        when the body will not parse as JSON.
+        """
+
+        async def gateway(_request: web.Request) -> web.Response:
+            return web.Response(text="upstream gateway failed", status=502)
+
+        async with _serve({("GET", "/drones"): gateway}) as origin:
+            monkeypatch.setattr(settings, "FLEET_API_URL", origin)
+            result = await get_fleet_roster()
+
+        assert isinstance(result, ErrorResponse)
+        assert "upstream gateway failed" in result.message
+
+    async def test_error_status_with_empty_body_falls_back_to_status(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """An error with no usable detail still names the status code."""
+
+        async def empty(_request: web.Request) -> web.Response:
+            return web.Response(status=503)
+
+        async with _serve({("GET", "/drones"): empty}) as origin:
+            monkeypatch.setattr(settings, "FLEET_API_URL", origin)
+            result = await get_fleet_roster()
+
+        assert isinstance(result, ErrorResponse)
+        assert "503" in result.message
+
+    async def test_schema_violation_becomes_an_error_response(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Well-formed JSON of the wrong shape is a validation failure, not a crash."""
+
+        async def wrong_shape(_request: web.Request) -> web.Response:
+            return web.json_response(_status_payload(total_drones="not-an-integer"))
+
+        async with _serve({("GET", "/fleet/status"): wrong_shape}) as origin:
+            monkeypatch.setattr(settings, "FLEET_API_URL", origin)
+            result = await get_drone_swarm_status()
+
+        assert isinstance(result, ErrorResponse)
+        assert "invalid" in result.message.lower()
+
+    async def test_roster_that_is_not_an_array_is_an_error_response(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """``/drones`` returning an object instead of a list is rejected by shape."""
+
+        async def not_a_list(_request: web.Request) -> web.Response:
+            return web.json_response({"drones": []})
+
+        async with _serve({("GET", "/drones"): not_a_list}) as origin:
+            monkeypatch.setattr(settings, "FLEET_API_URL", origin)
+            result = await get_fleet_roster()
+
+        assert isinstance(result, ErrorResponse)
+        assert "non-array" in result.message
