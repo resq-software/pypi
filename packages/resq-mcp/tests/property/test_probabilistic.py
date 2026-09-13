@@ -17,8 +17,8 @@
 from __future__ import annotations
 
 import random
-import re
 
+from resq_mcp.core.models import ErrorResponse
 from resq_mcp.drone.models import DeploymentStatus, SectorAnalysis
 from resq_mcp.drone.service import (
     get_drone_swarm_status,
@@ -39,23 +39,26 @@ class TestProbabilisticBehavior:
         rate = detections / n_runs
         assert 0.20 <= rate <= 0.40, f"Detection rate {rate:.2%} outside expected range"
 
-    def test_deployment_eta_within_documented_range(self) -> None:
+    async def test_deployment_eta_within_documented_range(self) -> None:
         random.seed(42)
         for _ in range(100):
-            result = request_drone_deployment("Sector-1", "high")
+            result = await request_drone_deployment("Sector-1", "high")
             if isinstance(result, DeploymentStatus):
                 assert 30 <= result.eta_seconds <= 120
 
-    def test_drone_id_format_consistent(self) -> None:
+    async def test_drone_id_is_a_roster_member(self) -> None:
         random.seed(42)
-        pattern = re.compile(r"^UNIT-\d{3}$")
-        for _ in range(100):
-            result = request_drone_deployment("Sector-2", "critical")
-            if isinstance(result, DeploymentStatus):
-                assert pattern.match(result.drone_id), f"Bad drone ID: {result.drone_id}"
+        from resq_mcp.drone.service import FLEET_ROSTER
 
-    def test_swarm_battery_within_range(self) -> None:
+        known = {unit.drone_id for unit in FLEET_ROSTER}
+        for _ in range(100):
+            result = await request_drone_deployment("Sector-2", "critical")
+            if isinstance(result, DeploymentStatus):
+                assert result.drone_id in known, f"Bad drone ID: {result.drone_id}"
+
+    async def test_swarm_battery_within_range(self) -> None:
         random.seed(42)
         for _ in range(100):
-            status = get_drone_swarm_status()
+            status = await get_drone_swarm_status()
+            assert not isinstance(status, ErrorResponse)
             assert 60 <= status.average_battery <= 100
