@@ -43,8 +43,12 @@ class TestProbabilisticBehavior:
         random.seed(42)
         for _ in range(100):
             result = await request_drone_deployment("Sector-1", "high")
-            if isinstance(result, DeploymentStatus):
-                assert 30 <= result.eta_seconds <= 120
+            # Assert the type rather than guarding on it: with FLEET_API_URL
+            # unset the service falls back to the in-memory mock, so
+            # DeploymentStatus is the only correct outcome. A guard would let a
+            # regression returning ErrorResponse 100 times pass silently.
+            assert isinstance(result, DeploymentStatus)
+            assert 30 <= result.eta_seconds <= 120
 
     async def test_drone_id_is_a_roster_member(self) -> None:
         random.seed(42)
@@ -53,8 +57,8 @@ class TestProbabilisticBehavior:
         known = {unit.drone_id for unit in FLEET_ROSTER}
         for _ in range(100):
             result = await request_drone_deployment("Sector-2", "critical")
-            if isinstance(result, DeploymentStatus):
-                assert result.drone_id in known, f"Bad drone ID: {result.drone_id}"
+            assert isinstance(result, DeploymentStatus)
+            assert result.drone_id in known, f"Bad drone ID: {result.drone_id}"
 
     async def test_swarm_battery_within_range(self) -> None:
         random.seed(42)
