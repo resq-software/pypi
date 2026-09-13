@@ -108,7 +108,7 @@ async def _error_from_response(resp: aiohttp.ClientResponse) -> ErrorResponse:
     detail: str | None = None
     try:
         payload: Any = await resp.json()
-    except aiohttp.ContentTypeError:
+except (aiohttp.ContentTypeError, ValueError):
         text = await resp.text()
         detail = text.strip() or None
     else:
