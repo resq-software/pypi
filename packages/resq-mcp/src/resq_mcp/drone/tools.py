@@ -133,7 +133,8 @@ async def get_drone_swarm_status() -> SwarmStatus:
         SwarmStatus: Total and active drone counts with fleet-level telemetry.
 
     Raises:
-        FastMCPError: If the rate limit is exceeded.
+        FastMCPError: If the rate limit is exceeded, or fleet-api is configured
+            and the request fails.
 
     Example:
         >>> swarm = await get_drone_swarm_status()
@@ -141,7 +142,15 @@ async def get_drone_swarm_status() -> SwarmStatus:
     """
     preflight("get_drone_swarm_status", mutating=False)
 
-    result = _get_drone_swarm_status()
+    result = await _get_drone_swarm_status()
+    if isinstance(result, ErrorResponse):
+        audit_log(
+            "get_drone_swarm_status",
+            status="denied",
+            reason="fleet_api_error",
+        )
+        raise FastMCPError(result.message)
+
     audit_log(
         "get_drone_swarm_status",
         status="accepted",
@@ -172,7 +181,8 @@ async def request_drone_deployment(
 
     Raises:
         FastMCPError: If Safe Mode is enabled, the rate limit is exceeded, the
-            sector_id fails the identifier allow-list, or the sector is unknown.
+            sector_id fails the identifier allow-list, the sector is unknown, or
+            fleet-api reports no eligible drone (HTTP 409).
 
     Example:
         >>> status = await request_drone_deployment("Sector-1", priority="critical")
@@ -191,14 +201,14 @@ async def request_drone_deployment(
         identifiers={"sector_id": sector_id},
     )
 
-    result = _request_drone_deployment(sector_id, priority)
+    result = await _request_drone_deployment(sector_id, priority)
     if isinstance(result, ErrorResponse):
         audit_log(
             "request_drone_deployment",
             status="denied",
             parameters={"sector_id": sector_id, "priority": priority},
             sector_id=sector_id,
-            reason="sector_not_found",
+            reason="deployment_failed",
         )
         raise FastMCPError(result.message)
 

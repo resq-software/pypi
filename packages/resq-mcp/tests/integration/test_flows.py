@@ -68,7 +68,7 @@ class TestIncidentToMissionFlow:
 
 
 class TestSurveillanceToDeploymentFlow:
-    def test_critical_scan_triggers_deployment(self) -> None:
+    async def test_critical_scan_triggers_deployment(self) -> None:
         random.seed(0)
         detection = None
         for _ in range(20):
@@ -81,7 +81,7 @@ class TestSurveillanceToDeploymentFlow:
         assert detection.disaster_type is not None
         alerts = get_predictive_alerts(detection.sector_id)
         assert not isinstance(alerts, ErrorResponse)
-        deployment = request_drone_deployment(detection.sector_id, "critical")
+        deployment = await request_drone_deployment(detection.sector_id, "critical")
         assert isinstance(deployment, DeploymentStatus)
         assert deployment.sector_id == detection.sector_id
         assert deployment.status == "deployed"

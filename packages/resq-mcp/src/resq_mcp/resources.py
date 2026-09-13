@@ -21,6 +21,7 @@
 
 from fastmcp.exceptions import FastMCPError
 
+from resq_mcp.core.models import ErrorResponse
 from resq_mcp.drone.service import get_drone_swarm_status, get_fleet_roster
 from resq_mcp.server import mcp, simulations
 
@@ -93,7 +94,7 @@ async def get_simulation_status(sim_id: str) -> str:
 
 
 @mcp.resource("resq://drones/active")
-def list_active_drones() -> str:
+async def list_active_drones() -> str:
     """List currently deployed drones in the active fleet.
 
     Resource endpoint providing real-time fleet status for operator awareness.
@@ -112,6 +113,9 @@ def list_active_drones() -> str:
             - A fleet summary: active/total counts, average battery,
               network health, and last ground-station sync
 
+    Raises:
+        FastMCPError: If the fleet backend is configured and the request fails.
+
     Example Response:
         [Active Fleet Status]
         - DRONE-Alpha (Surveillance): home Sector-4
@@ -128,14 +132,19 @@ def list_active_drones() -> str:
         - Sector coverage assessment
 
     Note:
-        Fleet metrics are still simulated. Production would query live telemetry
-        from the MCP drone feed server for per-drone position, battery, and
-        mission status rather than fleet-level aggregates.
+        Fleet metrics come from the drone service, which reads fleet-api when
+        ``RESQ_FLEET_API_URL`` is set and otherwise uses the in-memory mock.
     """
-    swarm = get_drone_swarm_status()
+    swarm = await get_drone_swarm_status()
+    if isinstance(swarm, ErrorResponse):
+        raise FastMCPError(swarm.message)
+
+    roster_result = await get_fleet_roster()
+    if isinstance(roster_result, ErrorResponse):
+        raise FastMCPError(roster_result.message)
+
     roster = "\n".join(
-        f"    - {unit.drone_id} ({unit.role}): home {unit.home_sector}"
-        for unit in get_fleet_roster()
+        f"    - {unit.drone_id} ({unit.role}): home {unit.home_sector}" for unit in roster_result
     )
     summary = (
         f"    Fleet: {swarm.active_drones}/{swarm.total_drones} active | "

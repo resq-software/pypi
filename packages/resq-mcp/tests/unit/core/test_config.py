@@ -54,6 +54,16 @@ class TestSettings:
             settings = Settings()
             assert settings.PORT == 9000
 
+    def test_fleet_api_url_defaults_to_empty(self) -> None:
+        """Empty URL keeps the in-memory mock so the server runs without fleet-api."""
+        assert Settings().FLEET_API_URL == ""
+
+    def test_fleet_api_url_can_be_set_via_env(self) -> None:
+        """RESQ_FLEET_API_URL points the drone service at a live fleet-api."""
+        with patch.dict(os.environ, {"RESQ_FLEET_API_URL": "http://127.0.0.1:8000"}):
+            settings = Settings()
+            assert settings.FLEET_API_URL == "http://127.0.0.1:8000"
+
     def test_custom_api_key(self) -> None:
         """Test that custom API key can be set."""
         with patch.dict(os.environ, {"RESQ_API_KEY": "custom-token"}):
