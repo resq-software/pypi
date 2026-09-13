@@ -41,23 +41,29 @@ from resq_mcp.drone.service import (
 class TestGetFleetRoster:
     """Tests for the get_fleet_roster function."""
 
-    def test_returns_the_module_roster(self) -> None:
+    async def test_returns_the_module_roster(self) -> None:
         """The accessor exposes FLEET_ROSTER without copying or reordering it."""
-        assert get_fleet_roster() is FLEET_ROSTER
+        assert await get_fleet_roster() is FLEET_ROSTER
 
-    def test_roster_is_not_empty(self) -> None:
+    async def test_roster_is_not_empty(self) -> None:
         """A deployment with no drones would make every fleet metric meaningless."""
-        assert len(get_fleet_roster()) > 0
+        roster = await get_fleet_roster()
+        assert not isinstance(roster, ErrorResponse)
+        assert len(roster) > 0
 
-    def test_drone_ids_are_unique(self) -> None:
+    async def test_drone_ids_are_unique(self) -> None:
         """Duplicate IDs would make per-drone telemetry ambiguous."""
-        ids = [unit.drone_id for unit in get_fleet_roster()]
+        roster = await get_fleet_roster()
+        assert not isinstance(roster, ErrorResponse)
+        ids = [unit.drone_id for unit in roster]
 
         assert len(ids) == len(set(ids))
 
-    def test_every_home_sector_is_a_monitored_sector(self) -> None:
+    async def test_every_home_sector_is_a_monitored_sector(self) -> None:
         """A drone stationed outside the monitored network could never be tasked."""
-        for unit in get_fleet_roster():
+        roster = await get_fleet_roster()
+        assert not isinstance(roster, ErrorResponse)
+        for unit in roster:
             assert unit.home_sector in DRONE_SECTORS
 
 
@@ -135,74 +141,78 @@ class TestGetAllSectorsStatus:
 class TestGetDroneSwarmStatus:
     """Tests for the get_drone_swarm_status function."""
 
-    def test_returns_swarm_status(self) -> None:
+    async def test_returns_swarm_status(self) -> None:
         """Test that function returns SwarmStatus."""
-        result = get_drone_swarm_status()
+        result = await get_drone_swarm_status()
 
         assert isinstance(result, SwarmStatus)
 
-    def test_total_drones_tracks_the_fleet_roster(self) -> None:
+    async def test_total_drones_tracks_the_fleet_roster(self) -> None:
         """total_drones is derived from FLEET_ROSTER, not a hardcoded literal."""
-        result = get_drone_swarm_status()
+        result = await get_drone_swarm_status()
 
+        assert isinstance(result, SwarmStatus)
         assert result.total_drones == len(FLEET_ROSTER)
 
-    def test_swarm_has_valid_drone_counts(self) -> None:
+    async def test_swarm_has_valid_drone_counts(self) -> None:
         """Test that drone counts are valid."""
-        result = get_drone_swarm_status()
+        result = await get_drone_swarm_status()
 
+        assert isinstance(result, SwarmStatus)
         assert result.total_drones == 3
         assert 2 <= result.active_drones <= 3
 
-    def test_swarm_has_valid_battery(self) -> None:
+    async def test_swarm_has_valid_battery(self) -> None:
         """Test that battery level is within expected range."""
-        result = get_drone_swarm_status()
+        result = await get_drone_swarm_status()
 
+        assert isinstance(result, SwarmStatus)
         assert 60 <= result.average_battery <= 100
 
-    def test_swarm_network_is_operational(self) -> None:
+    async def test_swarm_network_is_operational(self) -> None:
         """Test that network status is operational."""
-        result = get_drone_swarm_status()
+        result = await get_drone_swarm_status()
 
+        assert isinstance(result, SwarmStatus)
         assert result.network_status == "operational"
 
 
 class TestRequestDroneDeployment:
     """Tests for the request_drone_deployment function."""
 
-    def test_deploy_to_valid_sector_succeeds(self) -> None:
+    async def test_deploy_to_valid_sector_succeeds(self) -> None:
         """Test deployment to valid sector returns DeploymentStatus."""
-        result = request_drone_deployment("Sector-1")
+        result = await request_drone_deployment("Sector-1")
 
         assert isinstance(result, DeploymentStatus)
         assert result.status == "deployed"
         assert result.sector_id == "Sector-1"
         assert result.priority == "high"
 
-    def test_deploy_to_invalid_sector_returns_error(self) -> None:
+    async def test_deploy_to_invalid_sector_returns_error(self) -> None:
         """Test deployment to invalid sector returns ErrorResponse."""
-        result = request_drone_deployment("Invalid-Sector")
+        result = await request_drone_deployment("Invalid-Sector")
 
         assert isinstance(result, ErrorResponse)
         assert "not found" in result.message
 
-    def test_deploy_with_custom_priority(self) -> None:
+    async def test_deploy_with_custom_priority(self) -> None:
         """Test deployment with custom priority."""
-        result = request_drone_deployment("Sector-2", priority="critical")
+        result = await request_drone_deployment("Sector-2", priority="critical")
 
         assert isinstance(result, DeploymentStatus)
         assert result.priority == "critical"
 
-    def test_deploy_assigns_drone_id(self) -> None:
-        """Test that deployment assigns a valid drone ID."""
-        result = request_drone_deployment("Sector-3")
+    async def test_deploy_assigns_a_real_roster_drone(self) -> None:
+        """Dispatch must name a drone that exists on the roster, not a fake UNIT- id."""
+        result = await request_drone_deployment("Sector-3")
 
         assert isinstance(result, DeploymentStatus)
-        assert result.drone_id.startswith("UNIT-")
+        assert result.drone_id in {unit.drone_id for unit in FLEET_ROSTER}
 
-    def test_deploy_has_valid_eta(self) -> None:
+    async def test_deploy_has_valid_eta(self) -> None:
         """Test that deployment has valid ETA."""
-        result = request_drone_deployment("Sector-4")
+        result = await request_drone_deployment("Sector-4")
 
         assert isinstance(result, DeploymentStatus)
         assert 30 <= result.eta_seconds <= 120
