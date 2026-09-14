@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
@@ -82,3 +82,17 @@ async def list_resq_tools(client: MultiServerMCPClient | None = None) -> list[st
     owned = client or mcp_client()
     tools = await owned.get_tools()
     return sorted(tool.name for tool in tools)
+
+
+async def load_tool_map(client: MultiServerMCPClient | None = None) -> dict[str, Any]:
+    """Load resq-mcp tools keyed by name.
+
+    Args:
+        client: Optional pre-built client. Tests inject a fake.
+
+    Returns:
+        dict[str, Any]: LangChain tools keyed by ``tool.name``.
+    """
+    owned = client or mcp_client()
+    tools = await owned.get_tools()
+    return {tool.name: tool for tool in tools}

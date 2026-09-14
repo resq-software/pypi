@@ -63,6 +63,15 @@ async def test_list_resq_tools_returns_sorted_names() -> None:
     ]
 
 
+async def test_load_tool_map_keys_tools_by_name() -> None:
+    """The graph looks up tools by name, so the map must use tool.name as keys."""
+    from resq_agent.mcp import load_tool_map
+
+    client = _FakeClient(["validate_incident", "get_deployment_strategy"])
+    tools = await load_tool_map(client)  # type: ignore[arg-type]
+    assert set(tools) == {"validate_incident", "get_deployment_strategy"}
+
+
 async def test_list_resq_tools_constructs_a_client_when_none_is_passed(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
