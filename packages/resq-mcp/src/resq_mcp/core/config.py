@@ -25,6 +25,7 @@ Environment variables:
     RESQ_TRANSPORT: MCP transport — stdio (default), http, sse, or streamable-http
     RESQ_PORT: Port for HTTP/SSE server
     RESQ_HOST: Host to bind to (HTTP/SSE transports)
+    RESQ_FLEET_API_URL: Base URL of fleet-api. Empty keeps the in-memory mock.
     RESQ_SAFE_MODE: If True, side-effecting tools are disabled or mocked safely
 """
 
@@ -92,6 +93,15 @@ class Settings(BaseSettings):
     )
     PORT: int = Field(default=8000, description="Port for HTTP/SSE server")
     HOST: str = Field(default="0.0.0.0", description="Host to bind to (HTTP/SSE transports)")
+
+    # Fleet backend
+    FLEET_API_URL: str = Field(
+        default="",
+        description=(
+            "Base URL of the fleet-api service (no trailing slash). "
+            "Empty keeps the in-memory mock backend."
+        ),
+    )
 
     # Feature Flags
     SAFE_MODE: bool = Field(
