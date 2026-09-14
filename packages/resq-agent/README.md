@@ -6,24 +6,40 @@ MCP is the tool-provider side. This package is the tool-consumer side: it
 decides *when* to call validate / strategy / simulate / deploy, and it pauses
 for a human before anything Safe Mode would block.
 
-## Milestone 1 (this PR)
-
-Connect to a running `resq-mcp` over stdio and list its tools. No LLM yet.
+## Setup
 
 ```bash
 cd packages/resq-agent
 uv sync
+```
+
+## Milestone 1 — list tools
+
+```bash
 uv run resq-agent list-tools
 ```
 
-That spawns `uv run resq-mcp` from `packages/resq-mcp` with `RESQ_SAFE_MODE=true`.
+Spawns `uv run resq-mcp` from `packages/resq-mcp` with `RESQ_SAFE_MODE=true`.
+
+## Milestone 2 — linear graph (no mutations)
+
+```
+assess → validate_incident → get_deployment_strategy
+```
+
+The graph **is** the control flow. It does not ask an LLM which tool to call.
+Rejected incidents stop after validate and never request a strategy.
+
+```bash
+uv run resq-agent run --incident-id INC-DEMO-1 --sector-id Sector-1
+uv run resq-agent run --incident-id INC-DEMO-1 --reject
+```
 
 ## Later milestones
 
-1. Linear graph: assess → `validate_incident` → `get_deployment_strategy`
-2. `run_simulation` + poll `resq://simulations/{id}` until complete
-3. LangGraph interrupt before `update_mission_params` (the Safe Mode gate)
-4. README example with a real model provider (`openai` / `anthropic` extras)
+1. `run_simulation` + poll `resq://simulations/{id}` until complete
+2. LangGraph interrupt before `update_mission_params` (the Safe Mode gate)
+3. Optional model-provider extras (`openai` / `anthropic`)
 
 ## Tests
 
@@ -33,5 +49,4 @@ uv run ruff check src/ tests/
 uv run mypy src/
 ```
 
-Tool listing is tested with a fake MCP client so CI does not spawn the server
-or need API keys.
+CI uses fake MCP tools so it does not spawn the server or need API keys.

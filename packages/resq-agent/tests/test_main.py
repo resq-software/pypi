@@ -36,3 +36,22 @@ def test_list_tools_prints_names(capsys: pytest.CaptureFixture[str]) -> None:
         main()
     captured = capsys.readouterr()
     assert captured.out.splitlines() == ["validate_incident", "run_simulation"]
+
+
+def test_run_prints_json_state(capsys: pytest.CaptureFixture[str]) -> None:
+    """The run command dumps the final graph state as JSON."""
+
+    async def fake_run(
+        incident: dict[str, object],
+        tools: object | None = None,
+    ) -> dict[str, object]:
+        return {**incident, "assessment": "ok"}
+
+    with (
+        patch("sys.argv", ["resq-agent", "run", "--incident-id", "INC-1"]),
+        patch("resq_agent.__main__.run_incident", fake_run),
+    ):
+        main()
+    captured = capsys.readouterr()
+    assert '"incident_id": "INC-1"' in captured.out
+    assert '"assessment": "ok"' in captured.out
