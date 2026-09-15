@@ -30,7 +30,9 @@ import random
 from datetime import UTC, datetime
 from typing import Final
 
+from resq_mcp.core.config import settings
 from resq_mcp.core.models import Coordinates, DisasterScenario, ErrorResponse
+from resq_mcp.drone.client import create_deployment, fetch_fleet_roster, fetch_swarm_status
 from resq_mcp.drone.models import (
     DeploymentStatus,
     DroneUnit,
@@ -207,57 +209,61 @@ def get_all_sectors_status() -> NetworkStatus:
     )
 
 
-def get_fleet_roster() -> tuple[DroneUnit, ...]:
-    """Return the standing fleet roster.
-
-    Fleet composition is static configuration rather than telemetry: it answers
-    "which drones does this deployment own", not "what are they doing right now".
-    Callers that need live metrics should combine this with
-    :func:`get_drone_swarm_status`.
+def _fleet_api_url() -> str:
+    """Return the configured fleet-api origin, or empty when using the mock.
 
     Returns:
-        tuple[DroneUnit, ...]: Every drone in the fleet, in roster order.
+        str: Stripped base URL, or ``""`` to keep the in-memory mock.
+    """
+    return settings.FLEET_API_URL.strip()
+
+
+async def get_fleet_roster() -> tuple[DroneUnit, ...] | ErrorResponse:
+    """Return the standing fleet roster.
+
+    Fleet composition answers "which drones does this deployment own", not
+    "what are they doing right now". When ``RESQ_FLEET_API_URL`` is set this
+    is ``GET /drones``; otherwise the in-memory :data:`FLEET_ROSTER` is used.
+
+    Returns:
+        tuple[DroneUnit, ...] | ErrorResponse: Every drone in the fleet, or an
+        error if the HTTP backend is configured and unreachable.
 
     Example:
-        >>> roster = get_fleet_roster()
-        >>> print(f"{len(roster)} drones: {[u.drone_id for u in roster]}")
-
-    Note:
-        Production would read fleet composition from the drone registry rather
-        than a module-level constant.
+        >>> roster = await get_fleet_roster()
+        >>> if not isinstance(roster, ErrorResponse):
+        ...     print(f"{len(roster)} drones: {[u.drone_id for u in roster]}")
     """
+    if url := _fleet_api_url():
+        return await fetch_fleet_roster(url)
     return FLEET_ROSTER
 
 
-def get_drone_swarm_status() -> SwarmStatus:
+async def get_drone_swarm_status() -> SwarmStatus | ErrorResponse:
     """Get the overall operational status of the drone swarm.
 
     Provides fleet-wide health metrics for monitoring drone readiness
     and availability. Used by operators to assess deployment capacity.
 
-    Simulation Behavior:
+    When ``RESQ_FLEET_API_URL`` is set this is ``GET /fleet/status``. Otherwise
+    the mock reports:
+
         - Total drones: Derived from FLEET_ROSTER
         - Active drones: Random 2-3 (some may be charging/maintenance)
         - Average battery: Random 60-100% (simulated degradation)
         - Network status: Always "operational" in dev mode
 
     Returns:
-        SwarmStatus: Fleet metrics including:
-            - Total and active drone counts
-            - Fleet-wide average battery percentage
-            - Network connectivity status
-            - Last sync timestamp (auto-generated)
+        SwarmStatus | ErrorResponse: Fleet metrics, or an error if the HTTP
+        backend is configured and the request fails.
 
     Example:
-        >>> swarm = get_drone_swarm_status()
-        >>> if swarm.average_battery < 30:
+        >>> swarm = await get_drone_swarm_status()
+        >>> if isinstance(swarm, SwarmStatus) and swarm.average_battery < 30:
         ...     print("WARNING: Low fleet battery")
-        >>> print(f"{swarm.active_drones}/{swarm.total_drones} drones active")
-
-    Note:
-        Production would aggregate real telemetry from the MCP drone feed
-        server, reporting actual battery, GPS lock, and link quality.
     """
+    if url := _fleet_api_url():
+        return await fetch_swarm_status(url)
     return SwarmStatus(
         total_drones=len(FLEET_ROSTER),
         active_drones=random.randint(2, 3),  # noqa: S311
@@ -266,20 +272,16 @@ def get_drone_swarm_status() -> SwarmStatus:
     )
 
 
-def request_drone_deployment(
+async def request_drone_deployment(
     sector_id: str,
     priority: str = "high",
 ) -> DeploymentStatus | ErrorResponse:
     """Request deployment of a drone to a specific sector.
 
-    Simulates drone dispatch request handling with immediate assignment.
-    In production, this would interface with the drone control module
-    and mission planning system to allocate resources.
-
-    Simulation Behavior:
-        - Assigns random drone unit (UNIT-001 through UNIT-003)
-        - Generates random ETA (30-120 seconds)
-        - Always returns "deployed" status if sector valid
+    When ``RESQ_FLEET_API_URL`` is set this is ``POST /deployments`` and the
+    assigned ``drone_id`` is whatever fleet-api actually reserved. The mock
+    path still validates the sector locally and assigns a drone from
+    :data:`FLEET_ROSTER` rather than inventing an ID the fleet has never heard of.
 
     Args:
         sector_id: The target sector for deployment (e.g., "Sector-1").
@@ -292,26 +294,26 @@ def request_drone_deployment(
 
     Returns:
         DeploymentStatus: Confirmation with assigned drone and ETA if
-                          sector is valid.
-        ErrorResponse: Error message if sector_id is invalid.
+                          the dispatch succeeded.
+        ErrorResponse: Unknown sector, no eligible drone, or HTTP failure.
 
     Example:
-        >>> status = request_drone_deployment("Sector-3", priority="critical")
+        >>> status = await request_drone_deployment("Sector-3", priority="critical")
         >>> if isinstance(status, DeploymentStatus):
         ...     print(f"Drone {status.drone_id} dispatched")
         ...     print(f"ETA: {status.eta_seconds} seconds")
-
-    Note:
-        Production would check drone availability, battery levels, and
-        weather conditions before confirming deployment.
     """
+    if url := _fleet_api_url():
+        return await create_deployment(url, sector_id, priority)
+
     if sector_id not in DRONE_SECTORS:
         return ErrorResponse(message=f"Sector {sector_id} not found")
 
+    assigned = FLEET_ROSTER[random.randrange(len(FLEET_ROSTER))]  # noqa: S311
     return DeploymentStatus(
         status="deployed",
         sector_id=sector_id,
         priority=priority,
-        drone_id=f"UNIT-{random.randint(1, 3):03d}",  # noqa: S311
+        drone_id=assigned.drone_id,
         eta_seconds=random.randint(30, 120),  # noqa: S311
     )
