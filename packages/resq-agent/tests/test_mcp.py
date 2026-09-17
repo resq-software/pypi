@@ -52,6 +52,29 @@ def test_default_connection_uses_stdio_and_safe_mode() -> None:
     assert conn["env"]["RESQ_SAFE_MODE"] == "true"
 
 
+def test_ambient_safe_mode_false_does_not_reach_the_child(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An exported RESQ_SAFE_MODE=false must not disarm the spawned server.
+
+    The connection copies os.environ, so a caller who happens to have the gate
+    disabled in their own shell would otherwise hand that straight to the
+    child process. The safe default has to win over the ambient value.
+    """
+    monkeypatch.setenv("RESQ_SAFE_MODE", "false")
+    conn = default_mcp_connection()
+    assert conn["env"]["RESQ_SAFE_MODE"] == "true"
+
+
+def test_safe_mode_can_be_disabled_only_explicitly(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Turning the gate off is an argument, not an environment variable."""
+    monkeypatch.setenv("RESQ_SAFE_MODE", "true")
+    conn = default_mcp_connection(safe_mode=False)
+    assert conn["env"]["RESQ_SAFE_MODE"] == "false"
+
+
 async def test_list_resq_tools_returns_sorted_names() -> None:
     """Names come from the MCP client, sorted so the CLI output is stable."""
     client = _FakeClient(["run_simulation", "validate_incident", "get_deployment_strategy"])

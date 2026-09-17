@@ -40,18 +40,29 @@ def resq_mcp_dir() -> Path:
     return Path(__file__).resolve().parents[3] / "resq-mcp"
 
 
-def default_mcp_connection() -> StdioConnection:
+def default_mcp_connection(*, safe_mode: bool = True) -> StdioConnection:
     """Build the stdio connection that spawns a local resq-mcp process.
 
-    Safe Mode is forced on unless the caller already set ``RESQ_SAFE_MODE``.
-    That keeps the first graph milestones read-only: mutations raise until a
-    later human-in-the-loop node turns the gate off.
+    Safe Mode is set explicitly, never inherited. ``os.environ.copy()`` carries
+    the caller's ambient ``RESQ_SAFE_MODE`` into the child, so ``setdefault``
+    would let an operator who happens to have ``RESQ_SAFE_MODE=false`` exported
+    silently spawn an unguarded server. The value is assigned unconditionally
+    so the gate depends on this argument alone.
+
+    Turning the gate off is therefore a deliberate, greppable call rather than
+    an accident of the environment, which is what a later human-in-the-loop
+    node needs.
+
+    Args:
+        safe_mode: When True (the default) the spawned server refuses
+            mutations. Pass False only from a node that has obtained human
+            approval.
 
     Returns:
         StdioConnection: Connection dict accepted by ``MultiServerMCPClient``.
     """
     env = os.environ.copy()
-    env.setdefault("RESQ_SAFE_MODE", "true")
+    env["RESQ_SAFE_MODE"] = "true" if safe_mode else "false"
     return {
         "transport": "stdio",
         "command": "uv",
