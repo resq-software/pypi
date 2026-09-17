@@ -18,6 +18,8 @@ jobs:
             dir: packages/resq-mcp
           - name: resq-dsa
             dir: packages/resq-dsa
+          - name: resq-agent
+            dir: packages/resq-agent
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -43,6 +45,8 @@ jobs:
             dir: packages/resq-mcp
           - name: resq-dsa
             dir: packages/resq-dsa
+          - name: resq-agent
+            dir: packages/resq-agent
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -71,6 +75,8 @@ jobs:
             dir: packages/resq-mcp
           - name: resq-dsa
             dir: packages/resq-dsa
+          - name: resq-agent
+            dir: packages/resq-agent
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -89,7 +95,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name: [resq-mcp, resq-dsa]
+        name: [resq-mcp, resq-dsa, resq-agent]
         python-version: ["3.11", "3.12", "3.13"]
         include:
           - name: resq-mcp
@@ -100,6 +106,11 @@ jobs:
           - name: resq-dsa
             dir: packages/resq-dsa
             cov: ""
+          - name: resq-agent
+            dir: packages/resq-agent
+            # addopts sets --cov-fail-under=0 so local and partial runs do not
+            # fail on the project threshold; CI is where 85 is enforced.
+            cov: --cov=src --cov-report=xml --cov-fail-under=85
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -124,6 +135,8 @@ jobs:
             dir: packages/resq-mcp
           - name: resq-dsa
             dir: packages/resq-dsa
+          - name: resq-agent
+            dir: packages/resq-agent
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
