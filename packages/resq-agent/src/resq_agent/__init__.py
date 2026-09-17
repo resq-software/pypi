@@ -14,9 +14,14 @@
 
 """LangGraph incident-response agent that drives resq-mcp."""
 
-from resq_agent.mcp import default_mcp_connection, list_resq_tools
+from resq_agent.graph import IncidentState, build_incident_graph, run_incident
+from resq_agent.mcp import default_mcp_connection, list_resq_tools, load_tool_map
 
 __all__ = [
+    "IncidentState",
+    "build_incident_graph",
     "default_mcp_connection",
     "list_resq_tools",
+    "load_tool_map",
+    "run_incident",
 ]

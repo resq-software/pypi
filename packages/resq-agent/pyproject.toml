@@ -83,7 +83,7 @@ ignore = []
 known-first-party = ["resq_agent"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["S101", "ARG001", "TC002"]
+"tests/**/*.py" = ["S101", "ARG001", "ARG002", "TC002"]
 
 [tool.mypy]
 strict = true
