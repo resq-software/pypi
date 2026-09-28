@@ -89,23 +89,62 @@ jobs:
           name: mcp-dist
           path: packages/resq-mcp/dist/
 
+  # SPDX JSON SBOM of the released package source (its uv.lock graph),
+  # attached to the GitHub Release; build provenance for the dists and SBOM.
   mcp-attest:
-    name: "mcp: Attestation"
+    name: "mcp: SBOM and attestation"
     needs: [mcp-release, mcp-build]
     if: needs.mcp-release.outputs.released == 'true'
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
-      attestations: write
+      contents: write # attach the SBOM to the GitHub release
+      id-token: write # sign the provenance attestation
+      attestations: write # store the provenance attestation
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ needs.mcp-release.outputs.tag }}
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.mcp-release.outputs.tag }}
+          persist-credentials: false
+
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: mcp-dist
           path: dist/
 
+      - name: Generate the SBOM (SPDX JSON)
+        uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
+        with:
+          path: packages/resq-mcp
+          format: spdx-json
+          output-file: resq-mcp-${{ needs.mcp-release.outputs.version }}.spdx.json
+          # The last step attaches it to the release.
+          upload-artifact: false
+          upload-release-assets: false
+
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
-          subject-path: dist/*
+          subject-path: |
+            dist/*
+            resq-mcp-*.spdx.json
+
+      - name: Attach the SBOM to the GitHub release
+        # The tag is passed via env, never `${{ }}` inside run:. A re-run keeps
+        # an SBOM already attached (the run that uploaded it attested it)
+        # rather than deleting it before the replacement is up.
+        run: |
+          set -euo pipefail
+          attached=$(gh release view "$TAG" --json assets --jq '.assets[].name')
+          for f in resq-mcp-[0-9]*.spdx.json; do
+            if grep -qxF "$f" <<<"$attached"; then
+              echo "keep: $f is already attached"
+            else
+              gh release upload "$TAG" "$f"
+            fi
+          done
 
   mcp-publish:
     name: "mcp: Publish to PyPI"
@@ -129,8 +168,14 @@ jobs:
     if: needs.mcp-release.outputs.released == 'true'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write # attach the image SBOM to the GitHub release
       packages: write
+      id-token: write # sign the image provenance attestation
+      attestations: write # store the image provenance attestation
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ needs.mcp-release.outputs.tag }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -144,6 +189,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        id: push
         with:
           context: packages/resq-mcp
           file: packages/resq-mcp/Dockerfile
@@ -151,6 +197,37 @@ jobs:
           tags: |
             ghcr.io/resq-software/mcp:latest
             ghcr.io/resq-software/mcp:${{ needs.mcp-release.outputs.version }}
+
+      - name: Generate the image SBOM (SPDX JSON)
+        uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
+        with:
+          image: ghcr.io/resq-software/mcp@${{ steps.push.outputs.digest }}
+          format: spdx-json
+          output-file: resq-mcp-image-${{ needs.mcp-release.outputs.version }}.spdx.json
+          # The last step attaches it to the release.
+          upload-artifact: false
+          upload-release-assets: false
+
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ghcr.io/resq-software/mcp
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Attach the image SBOM to the GitHub release
+        # The tag is passed via env, never `${{ }}` inside run:. A re-run keeps
+        # an SBOM already attached (the run that uploaded it attested it)
+        # rather than deleting it before the replacement is up.
+        run: |
+          set -euo pipefail
+          attached=$(gh release view "$TAG" --json assets --jq '.assets[].name')
+          for f in resq-mcp-image-*.spdx.json; do
+            if grep -qxF "$f" <<<"$attached"; then
+              echo "keep: $f is already attached"
+            else
+              gh release upload "$TAG" "$f"
+            fi
+          done
 
   # ━━━ resq-dsa ━━━
 
@@ -205,23 +282,62 @@ jobs:
           name: dsa-dist
           path: packages/resq-dsa/dist/
 
+  # SPDX JSON SBOM of the released package source (its uv.lock graph),
+  # attached to the GitHub Release; build provenance for the dists and SBOM.
   dsa-attest:
-    name: "dsa: Attestation"
+    name: "dsa: SBOM and attestation"
     needs: [dsa-release, dsa-build]
     if: needs.dsa-release.outputs.released == 'true'
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
-      attestations: write
+      contents: write # attach the SBOM to the GitHub release
+      id-token: write # sign the provenance attestation
+      attestations: write # store the provenance attestation
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ needs.dsa-release.outputs.tag }}
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.dsa-release.outputs.tag }}
+          persist-credentials: false
+
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: dsa-dist
           path: dist/
 
+      - name: Generate the SBOM (SPDX JSON)
+        uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
+        with:
+          path: packages/resq-dsa
+          format: spdx-json
+          output-file: resq-dsa-${{ needs.dsa-release.outputs.version }}.spdx.json
+          # The last step attaches it to the release.
+          upload-artifact: false
+          upload-release-assets: false
+
       - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
-          subject-path: dist/*
+          subject-path: |
+            dist/*
+            resq-dsa-*.spdx.json
+
+      - name: Attach the SBOM to the GitHub release
+        # The tag is passed via env, never `${{ }}` inside run:. A re-run keeps
+        # an SBOM already attached (the run that uploaded it attested it)
+        # rather than deleting it before the replacement is up.
+        run: |
+          set -euo pipefail
+          attached=$(gh release view "$TAG" --json assets --jq '.assets[].name')
+          for f in resq-dsa-*.spdx.json; do
+            if grep -qxF "$f" <<<"$attached"; then
+              echo "keep: $f is already attached"
+            else
+              gh release upload "$TAG" "$f"
+            fi
+          done
 
   dsa-publish:
     name: "dsa: Publish to PyPI"
