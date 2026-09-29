@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Algorithmic complexity verification tests.
 
 Uses the ``big_o`` package to empirically verify that each data structure

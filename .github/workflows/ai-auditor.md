@@ -15,8 +15,20 @@ permissions:
   issues: read
   pull-requests: read
 
-# AI engine - Gemini (free Google AI Studio tier; avoids Copilot utility-model rate limits)
-engine: gemini
+# AI engine - Gemini (free Google AI Studio tier; avoids Copilot utility-model rate limits).
+# The model is pinned: left unpinned the proxy steers to whatever its alias globs
+# resolve to, which since 2026-08-10 has been `gemini-3.1-flash-tts-preview` — a
+# text-to-speech model with no entry in the AI-credits pricing table.
+model: gemini-2.5-pro
+engine:
+  id: gemini
+  # Pinned. gh-aw v0.88.7 otherwise picks Gemini CLI 0.55.1, which rejects the
+  # auth this workflow supplies, and the agent job dies before doing any work:
+  #     Invalid auth method selected.
+  #     [gemini-harness] attempt 1: process exit event exitCode=41
+  # GEMINI_API_KEY (the org secret) is wired the same either way, so the break
+  # is inside the CLI. Unpin only together with whatever auth change 0.5x wants.
+  version: "0.39.1"
 
 # Network access
 network: defaults
