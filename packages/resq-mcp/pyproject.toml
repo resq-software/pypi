@@ -41,6 +41,10 @@ dependencies = [
   # decision. Supersedes the old >=1.28.1 advisory floor (GHSA-vj7q-gjh5-988w
   # affects <1.28.1 only, so the 2.x line is clear).
   "mcp>=2.0,<3",
+  # >=2.14.0: GHSA-w6j9-cwv2-h6wq / CVE-2026-102274 (malformed RSA JWK aborts JWK Set
+  # parsing, CVSS 5.9). Transitive via mcp -> pyjwt[crypto] (unpinned, was resolving to
+  # 2.13.0); floored here so PyPI consumers resolve past it. [crypto] keeps mcp's extra.
+  "pyjwt[crypto]>=2.14.0",
   # >=4.0.3 adopts the 2026-07-28 protocol line deliberately rather than merely
   # permitting it; a >=3.3 floor would let a resolver fall back to 3.x and a
   # different negotiated protocol. <5 keeps the next major a decision.
