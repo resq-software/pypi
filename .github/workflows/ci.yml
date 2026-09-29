@@ -10,7 +10,7 @@ permissions: {}
 jobs:
   lint:
     name: Lint (${{ matrix.name }})
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.USE_SELF_HOSTED == 'true' && fromJSON('["self-hosted","linux","x64","zima"]') || 'ubuntu-latest' }}
     strategy:
       matrix:
         include:
@@ -37,7 +37,7 @@ jobs:
 
   typecheck:
     name: Type Check (${{ matrix.name }})
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.USE_SELF_HOSTED == 'true' && fromJSON('["self-hosted","linux","x64","zima"]') || 'ubuntu-latest' }}
     strategy:
       matrix:
         include:
@@ -66,7 +66,7 @@ jobs:
     # in each pyproject.toml; raise the floor over time as gaps
     # are filled.
     name: Docstring Coverage (${{ matrix.name }})
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.USE_SELF_HOSTED == 'true' && fromJSON('["self-hosted","linux","x64","zima"]') || 'ubuntu-latest' }}
     strategy:
       fail-fast: false
       matrix:
@@ -91,7 +91,7 @@ jobs:
   test:
     name: Test (${{ matrix.name }} / ${{ matrix.python-version }})
     needs: [lint, typecheck]
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.USE_SELF_HOSTED == 'true' && fromJSON('["self-hosted","linux","x64","zima"]') || 'ubuntu-latest' }}
     strategy:
       fail-fast: false
       matrix:
@@ -127,7 +127,7 @@ jobs:
   build:
     name: Build (${{ matrix.name }})
     needs: [test]
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.USE_SELF_HOSTED == 'true' && fromJSON('["self-hosted","linux","x64","zima"]') || 'ubuntu-latest' }}
     strategy:
       matrix:
         include:
@@ -163,7 +163,7 @@ jobs:
     name: required
     needs: [lint, typecheck, docstrings, test, build, repo-standards]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.USE_SELF_HOSTED == 'true' && fromJSON('["self-hosted","linux","x64","zima"]') || 'ubuntu-latest' }}
     steps:
       - name: Aggregate required results
         env:
