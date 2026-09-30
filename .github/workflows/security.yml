@@ -28,7 +28,15 @@ jobs:
     if: ${{ github.actor != 'dependabot[bot]' }}
     uses: resq-software/.github/.github/workflows/security-scan.yml@73b9edb8f4f28a99f70ee22eb5e2dd2bf7807c84 # main
     with:
-      languages: '["python","actions"]'
+      # No `languages:` on purpose — CodeQL on this repo is GitHub's code
+      # scanning DEFAULT SETUP, not this workflow. While both existed the
+      # reusable's CodeQL job ran, then had its upload refused:
+      #   "CodeQL analyses from advanced configurations cannot be processed
+      #    when the default setup is enabled"  (job status: configuration error)
+      # so every run threw its own results away. Omitting this input leaves it
+      # at the reusable's '[]' default, whose `if:` gate skips that job.
+      # Coverage is unchanged: default setup runs the `extended` query suite,
+      # which is broader than the default suite this workflow used.
       enable-semgrep: true
     # `secrets: inherit` is required here because the upstream reusable
     # workflow does not declare a `workflow_call.secrets:` contract.
