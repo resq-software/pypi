@@ -7,6 +7,116 @@
 
 set -euo pipefail
 
+HSKIP_HOOK='prepare-commit-msg'
+# Gating hook: it rewrites the commit message before the editor opens, and a
+# refusal here aborts the commit cleanly with nothing half-applied. So an
+# unrecognised GIT_HOOKS_SKIP fails closed, as in pre-commit and commit-msg.
+HSKIP_HARD_FAIL=1
+
+# ── GIT_HOOKS_SKIP — granular, fail-closed skip control ─────────────────────
+# Historically ANY non-empty value disabled the entire hook, so a plausible
+# looking `GIT_HOOKS_SKIP=audit` silently turned off the secret scan as well.
+# It no longer does: values are parsed, unknown values are refused, and every
+# skip is announced on stderr before any check runs.
+#
+# The token vocabulary below is GLOBAL — byte-identical in every canonical
+# ResQ hook — so a value exported once for a shell session cannot mean
+# different things in different hooks. A token owned by another hook is inert
+# here rather than an error.
+#
+#   all | 1 | true | yes | on   disable this hook entirely (loud warning)
+#   0 | false | no | off | none  explicit no-op: skip nothing (the old guard
+#                                disabled the whole hook for these)
+#   audit                       pre-commit   security audit (osv-scanner / audit-ci)
+#   format                      pre-commit   code formatters
+#   versioning                  pre-commit   changeset / version prompt
+#   msg-format                  commit-msg   Conventional Commits subject check
+#   wip-guard                   commit-msg   fixup!/squash!/WIP block on main
+#   force-push                  pre-push     force-push guard on main/master
+#   branch-name                 pre-push     branch naming convention
+#   notify                      post-merge / post-checkout  lockfile drift notices
+#   ticket                      prepare-commit-msg  branch ticket-ref prefix
+#   local                       any hook     the repo-local local-<hook> override
+#
+# There is deliberately NO 'secrets' token. The secret scan is the compensating
+# control for not licensing GitHub Secret Protection, so it is reachable only
+# by the explicit all-off value (which says so, loudly) or by git's own
+# per-invocation bypass flag.
+#
+# Separators: comma, colon or whitespace. Case-insensitive.
+
+hskip_usage() {
+    cat >&2 <<'HSKIP_USAGE'
+   Valid GIT_HOOKS_SKIP tokens (comma / colon / space separated):
+     all, 1, true, yes, on   disable the whole hook (prints a loud warning)
+     0, false, no, off, none skip nothing (explicit no-op)
+     audit                   pre-commit   security audit (osv-scanner / audit-ci)
+     format                  pre-commit   code formatters
+     versioning              pre-commit   changeset / version prompt
+     msg-format              commit-msg   Conventional Commits subject check
+     wip-guard               commit-msg   fixup!/squash!/WIP block on main
+     force-push              pre-push     force-push guard on main/master
+     branch-name             pre-push     branch naming convention
+     notify                  post-merge / post-checkout  lockfile drift notices
+     ticket                  prepare-commit-msg  branch ticket-ref prefix
+     local                   any hook     repo-local local-<hook> override
+   Examples:  GIT_HOOKS_SKIP=audit         GIT_HOOKS_SKIP=audit,format
+   The secret scan has no token of its own. It is reachable only via
+   GIT_HOOKS_SKIP=all or git's per-invocation bypass flag, and both are loud.
+HSKIP_USAGE
+}
+
+HSKIP_ALL=0
+HSKIP_SET=' '
+HSKIP_BAD=''
+HSKIP_BAD_SECRETS=0
+if [ -n "${GIT_HOOKS_SKIP:-}" ]; then
+    set -f  # tokens are parsed, never globbed
+    for hskip_tok in $(printf '%s' "${GIT_HOOKS_SKIP:-}" | tr ',:' '  ' | tr '[:upper:]' '[:lower:]'); do
+        case "$hskip_tok" in
+            all|1|true|yes|on)
+                HSKIP_ALL=1 ;;
+            0|false|no|off|none)
+                : ;;  # explicit "skip nothing"; the old guard disabled the
+                      # whole hook for these, which nobody ever intended
+            audit|format|versioning|msg-format|wip-guard|force-push|branch-name|notify|ticket|local)
+                HSKIP_SET="${HSKIP_SET}${hskip_tok} " ;;
+            secret|secrets|secret-scan|secrets-scan)
+                HSKIP_BAD="${HSKIP_BAD}${hskip_tok} "
+                HSKIP_BAD_SECRETS=1 ;;
+            *)
+                HSKIP_BAD="${HSKIP_BAD}${hskip_tok} " ;;
+        esac
+    done
+    set +f
+fi
+
+if [ -n "$HSKIP_BAD" ]; then
+    printf '\n❌ %s: GIT_HOOKS_SKIP=%s contains unrecognised token(s): %s\n' \
+        "$HSKIP_HOOK" "${GIT_HOOKS_SKIP:-}" "${HSKIP_BAD% }" >&2
+    if [ "$HSKIP_BAD_SECRETS" = 1 ]; then
+        printf '   The secret scan is NOT individually skippable: it is the compensating\n' >&2
+        printf '   control for unlicensed GitHub Secret Protection.\n' >&2
+    fi
+    if [ "$HSKIP_HARD_FAIL" = 1 ]; then
+        printf '   Refusing to run. Failing closed on purpose: an unrecognised value used\n' >&2
+        printf '   to mean "skip every check", which is the bug this parser replaces.\n' >&2
+        hskip_usage
+        exit 1
+    fi
+    printf '   Ignoring GIT_HOOKS_SKIP entirely; running every %s check.\n' "$HSKIP_HOOK" >&2
+    hskip_usage
+    HSKIP_ALL=0
+    HSKIP_SET=' '
+fi
+
+# hskip <token> — true when this invocation must skip that check.
+hskip() {
+    if [ "$HSKIP_ALL" = 1 ]; then return 0; fi
+    case "$HSKIP_SET" in *" $1 "*) return 0 ;; esac
+    return 1
+}
+
 COMMIT_MSG_FILE="${1:-}"
 COMMIT_SOURCE="${2:-}"
 
@@ -24,6 +134,9 @@ esac
 BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "")
 [ -z "$BRANCH" ] && exit 0
 
+# `ticket` is this hook's own token; `all` covers it too via hskip().
+hskip ticket && exit 0
+
 TICKET=$(grep -oE '[A-Z]{2,}-[0-9]+' <<<"$BRANCH" | head -1 || true)
 if [ -n "$TICKET" ]; then
     COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
@@ -33,6 +146,6 @@ if [ -n "$TICKET" ]; then
 fi
 
 LOCAL_HOOK="$(git rev-parse --show-toplevel)/.git-hooks/local-prepare-commit-msg"
-if [ -x "$LOCAL_HOOK" ]; then
+if ! hskip local && [ -x "$LOCAL_HOOK" ]; then
     exec "$LOCAL_HOOK" "$@"
 fi

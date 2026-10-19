@@ -7,30 +7,164 @@
 
 set -euo pipefail
 
-[ -n "${GIT_HOOKS_SKIP:-}" ] && exit 0
+HSKIP_HOOK='post-merge'
+# Non-gating hook: it runs *after* the merge has already happened and git
+# ignores its exit status, so refusing to run could not protect anything —
+# it would only add noise. A bad GIT_HOOKS_SKIP therefore warns and then
+# runs everything, and the operator hits the hard failure at their next
+# commit or push instead.
+HSKIP_HARD_FAIL=0
 
-# git passes 1 for a squash merge. `--squash` stages the result without
-# committing, so HEAD has not moved and a tree-to-tree diff sees nothing —
-# compare the working tree against ORIG_HEAD instead, which is where the merged
-# changes actually are.
-if [ "${1:-0}" = "1" ]; then
-    CHANGED=$(git diff --name-only ORIG_HEAD 2>/dev/null || true)
-else
-    CHANGED=$(git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD 2>/dev/null || true)
+# ── GIT_HOOKS_SKIP — granular, fail-closed skip control ─────────────────────
+# Historically ANY non-empty value disabled the entire hook, so a plausible
+# looking `GIT_HOOKS_SKIP=audit` silently turned off the secret scan as well.
+# It no longer does: values are parsed, unknown values are refused, and every
+# skip is announced on stderr before any check runs.
+#
+# The token vocabulary below is GLOBAL — byte-identical in every canonical
+# ResQ hook — so a value exported once for a shell session cannot mean
+# different things in different hooks. A token owned by another hook is inert
+# here rather than an error.
+#
+#   all | 1 | true | yes | on   disable this hook entirely (loud warning)
+#   0 | false | no | off | none  explicit no-op: skip nothing (the old guard
+#                                disabled the whole hook for these)
+#   audit                       pre-commit   security audit (osv-scanner / audit-ci)
+#   format                      pre-commit   code formatters
+#   versioning                  pre-commit   changeset / version prompt
+#   msg-format                  commit-msg   Conventional Commits subject check
+#   wip-guard                   commit-msg   fixup!/squash!/WIP block on main
+#   force-push                  pre-push     force-push guard on main/master
+#   branch-name                 pre-push     branch naming convention
+#   notify                      post-merge / post-checkout  lockfile drift notices
+#   ticket                      prepare-commit-msg  branch ticket-ref prefix
+#   local                       any hook     the repo-local local-<hook> override
+#
+# There is deliberately NO 'secrets' token. The secret scan is the compensating
+# control for not licensing GitHub Secret Protection, so it is reachable only
+# by the explicit all-off value (which says so, loudly) or by git's own
+# per-invocation bypass flag.
+#
+# Separators: comma, colon or whitespace. Case-insensitive.
+
+hskip_usage() {
+    cat >&2 <<'HSKIP_USAGE'
+   Valid GIT_HOOKS_SKIP tokens (comma / colon / space separated):
+     all, 1, true, yes, on   disable the whole hook (prints a loud warning)
+     0, false, no, off, none skip nothing (explicit no-op)
+     audit                   pre-commit   security audit (osv-scanner / audit-ci)
+     format                  pre-commit   code formatters
+     versioning              pre-commit   changeset / version prompt
+     msg-format              commit-msg   Conventional Commits subject check
+     wip-guard               commit-msg   fixup!/squash!/WIP block on main
+     force-push              pre-push     force-push guard on main/master
+     branch-name             pre-push     branch naming convention
+     notify                  post-merge / post-checkout  lockfile drift notices
+     ticket                  prepare-commit-msg  branch ticket-ref prefix
+     local                   any hook     repo-local local-<hook> override
+   Examples:  GIT_HOOKS_SKIP=audit         GIT_HOOKS_SKIP=audit,format
+   The secret scan has no token of its own. It is reachable only via
+   GIT_HOOKS_SKIP=all or git's per-invocation bypass flag, and both are loud.
+HSKIP_USAGE
+}
+
+HSKIP_ALL=0
+HSKIP_SET=' '
+HSKIP_BAD=''
+HSKIP_BAD_SECRETS=0
+if [ -n "${GIT_HOOKS_SKIP:-}" ]; then
+    set -f  # tokens are parsed, never globbed
+    for hskip_tok in $(printf '%s' "${GIT_HOOKS_SKIP:-}" | tr ',:' '  ' | tr '[:upper:]' '[:lower:]'); do
+        case "$hskip_tok" in
+            all|1|true|yes|on)
+                HSKIP_ALL=1 ;;
+            0|false|no|off|none)
+                : ;;  # explicit "skip nothing"; the old guard disabled the
+                      # whole hook for these, which nobody ever intended
+            audit|format|versioning|msg-format|wip-guard|force-push|branch-name|notify|ticket|local)
+                HSKIP_SET="${HSKIP_SET}${hskip_tok} " ;;
+            secret|secrets|secret-scan|secrets-scan)
+                HSKIP_BAD="${HSKIP_BAD}${hskip_tok} "
+                HSKIP_BAD_SECRETS=1 ;;
+            *)
+                HSKIP_BAD="${HSKIP_BAD}${hskip_tok} " ;;
+        esac
+    done
+    set +f
 fi
 
-# Matched by basename rather than anchored to the repository root: a monorepo
-# keeps lockfiles in nested workspaces (`libs/dotnet/flake.lock`,
-# `programs/Cargo.lock`), and a root-anchored pattern silently ignores them all.
-grep -qE "(^|/)Cargo\.lock$"  <<<"$CHANGED" && echo "📦 Cargo.lock changed after merge — run: cargo build"
-# `\?` is a GNU BRE extension; BSD grep on macOS reads it as a literal `?`, so
-# the optional-`b` form needs ERE to match `bun.lock` on every developer's box.
-grep -qE "(^|/)bun\.lockb?$"  <<<"$CHANGED" && echo "📦 bun.lock changed after merge — run: bun install"
-grep -qE "(^|/)uv\.lock$"     <<<"$CHANGED" && echo "📦 uv.lock changed after merge — run: uv sync"
-grep -qE "(^|/)flake\.lock$"  <<<"$CHANGED" && echo "📦 flake.lock changed after merge — exit and re-enter: nix develop"
+if [ -n "$HSKIP_BAD" ]; then
+    printf '\n❌ %s: GIT_HOOKS_SKIP=%s contains unrecognised token(s): %s\n' \
+        "$HSKIP_HOOK" "${GIT_HOOKS_SKIP:-}" "${HSKIP_BAD% }" >&2
+    if [ "$HSKIP_BAD_SECRETS" = 1 ]; then
+        printf '   The secret scan is NOT individually skippable: it is the compensating\n' >&2
+        printf '   control for unlicensed GitHub Secret Protection.\n' >&2
+    fi
+    if [ "$HSKIP_HARD_FAIL" = 1 ]; then
+        printf '   Refusing to run. Failing closed on purpose: an unrecognised value used\n' >&2
+        printf '   to mean "skip every check", which is the bug this parser replaces.\n' >&2
+        hskip_usage
+        exit 1
+    fi
+    printf '   Ignoring GIT_HOOKS_SKIP entirely; running every %s check.\n' "$HSKIP_HOOK" >&2
+    hskip_usage
+    HSKIP_ALL=0
+    HSKIP_SET=' '
+fi
+
+# hskip <token> — true when this invocation must skip that check.
+hskip() {
+    if [ "$HSKIP_ALL" = 1 ]; then return 0; fi
+    case "$HSKIP_SET" in *" $1 "*) return 0 ;; esac
+    return 1
+}
+
+# One-line notice: this hook only emits advisories, so the multi-line banner
+# used by the gating hooks would be pure noise on every merge.
+if [ -n "${GIT_HOOKS_SKIP:-}" ]; then
+    hskip_off=''
+    hskip_on=''
+    for hskip_pair in 'notify:lockfile-drift notices' 'local:local-post-merge'; do
+        hskip_name="${hskip_pair%%:*}"
+        hskip_label="${hskip_pair#*:}"
+        if hskip "$hskip_name"; then
+            hskip_off="${hskip_off:+$hskip_off, }$hskip_label"
+        else
+            hskip_on="${hskip_on:+$hskip_on, }$hskip_label"
+        fi
+    done
+    printf '⚠️  GIT_HOOKS_SKIP=%s — post-merge SKIPPED: %s | RUNNING: %s\n' \
+        "${GIT_HOOKS_SKIP:-}" "${hskip_off:-(nothing)}" "${hskip_on:-(nothing)}" >&2
+fi
+
+if ! hskip notify; then
+    # git passes 1 for a squash merge. `--squash` stages the result without
+    # committing, so HEAD has not moved and a tree-to-tree diff sees nothing —
+    # compare the working tree against ORIG_HEAD instead, which is where the
+    # merged changes actually are.
+    if [ "${1:-0}" = "1" ]; then
+        CHANGED=$(git diff --name-only ORIG_HEAD 2>/dev/null || true)
+    else
+        CHANGED=$(git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD 2>/dev/null || true)
+    fi
+
+    # Matched by basename rather than anchored to the repository root: a monorepo
+    # keeps lockfiles in nested workspaces (`libs/dotnet/flake.lock`,
+    # `programs/Cargo.lock`), and a root-anchored pattern silently ignores them all.
+    #
+    # `if/then/fi` rather than `cmd && echo`: as the last statement in this block
+    # a non-matching `grep` leaves a non-zero status behind, which makes a clean
+    # merge look like a failed hook.
+    if grep -qE "(^|/)Cargo\.lock$"  <<<"$CHANGED"; then echo "📦 Cargo.lock changed after merge — run: cargo build"; fi
+    # `\?` is a GNU BRE extension; BSD grep on macOS reads it as a literal `?`, so
+    # the optional-`b` form needs ERE to match `bun.lock` on every developer's box.
+    if grep -qE "(^|/)bun\.lockb?$"  <<<"$CHANGED"; then echo "📦 bun.lock changed after merge — run: bun install"; fi
+    if grep -qE "(^|/)uv\.lock$"     <<<"$CHANGED"; then echo "📦 uv.lock changed after merge — run: uv sync"; fi
+    if grep -qE "(^|/)flake\.lock$"  <<<"$CHANGED"; then echo "📦 flake.lock changed after merge — exit and re-enter: nix develop"; fi
+fi
 
 LOCAL_HOOK="$(git rev-parse --show-toplevel)/.git-hooks/local-post-merge"
-if [ -x "$LOCAL_HOOK" ]; then
+if ! hskip local && [ -x "$LOCAL_HOOK" ]; then
     exec "$LOCAL_HOOK" "$@"
 fi
 
