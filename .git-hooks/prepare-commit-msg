@@ -8,10 +8,13 @@
 set -euo pipefail
 
 HSKIP_HOOK='prepare-commit-msg'
-# Gating hook: it rewrites the commit message before the editor opens, and a
-# refusal here aborts the commit cleanly with nothing half-applied. So an
-# unrecognised GIT_HOOKS_SKIP fails closed, as in pre-commit and commit-msg.
-HSKIP_HARD_FAIL=1
+# Non-gating hook: it only prefixes a ticket ref and gates no check. Git also
+# runs it for non-fast-forward merges and for the commits that rebase,
+# cherry-pick and revert create, where a refusal stops the sequencer partway
+# through. So a bad GIT_HOOKS_SKIP warns and runs everything, as in
+# post-checkout and post-merge. A plain `git commit` has already met the hard
+# failure in pre-commit, which runs before this hook.
+HSKIP_HARD_FAIL=0
 
 # ── GIT_HOOKS_SKIP — granular, fail-closed skip control ─────────────────────
 # Historically ANY non-empty value disabled the entire hook, so a plausible
@@ -134,11 +137,13 @@ esac
 BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "")
 [ -z "$BRANCH" ] && exit 0
 
-# `ticket` is this hook's own token; `all` covers it too via hskip().
-hskip ticket && exit 0
+# `all` skips the whole hook, the local override below included. `ticket`
+# skips only the ticket prefix, so a local-prepare-commit-msg still runs
+# unless `local` is given as well.
+[ "$HSKIP_ALL" = 1 ] && exit 0
 
 TICKET=$(grep -oE '[A-Z]{2,}-[0-9]+' <<<"$BRANCH" | head -1 || true)
-if [ -n "$TICKET" ]; then
+if ! hskip ticket && [ -n "$TICKET" ]; then
     COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
     if ! grep -qF -- "$TICKET" <<<"$COMMIT_MSG"; then
         printf '[%s] %s\n' "$TICKET" "$COMMIT_MSG" > "$COMMIT_MSG_FILE"
