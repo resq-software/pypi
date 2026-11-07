@@ -1,0 +1,137 @@
+# Copyright 2026 ResQ Systems, Inc.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Restores automatic release preparation, which has been dead since
+# 2026-05-09.
+#
+# WHY THIS FILE EXISTS. `python-semantic-release` wants to push the version
+# commit and tag straight to `main`. The `default-branch-baseline` ruleset
+# (id 15191038) requires every change to `main` to arrive through a pull
+# request, and its bypass mode is `pull_request`, so even a bypass actor
+# cannot direct-push. Every push-triggered Release run therefore died with
+# `GH013: Repository rule violations found for refs/heads/main`. publish.yml
+# was switched to `workflow_dispatch` to stop the noise, which left release
+# preparation entirely manual.
+#
+# This is option 2 from publish.yml's header: compute the version without
+# pushing, then let the bump reach `main` through a PR like every other
+# change. It is the same shape already proven in this org by
+# `crates/release-plz.yml` and `npm/release.yml` -- a bot opens a release PR,
+# and merging that PR is what ships.
+#
+# SCOPE. This file only ever opens a pull request. It does not tag, publish,
+# or create a GitHub release, and it holds no registry credentials. Shipping
+# stays with publish.yml on `workflow_dispatch`, which works today. Wiring the
+# merge of a release PR straight through to publication is a deliberate
+# follow-up: a PyPI publish cannot be undone, so that step should land only
+# once this half has been observed working.
+#
+# packages/resq-agent is intentionally absent. It has no
+# `[tool.semantic_release]` configuration and no job in publish.yml, so it is
+# not a released package; adding it is a product decision, not a CI fix.
+
+name: Release PR
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  release-pr:
+    name: "Release PR (${{ matrix.pkg }})"
+    runs-on: ubuntu-latest
+    # Never cancel in flight: a half-created release branch is more annoying
+    # to clean up than a duplicate run is to wait for.
+    concurrency:
+      group: ${{ github.workflow }}-${{ matrix.pkg }}
+      cancel-in-progress: false
+    permissions:
+      contents: write        # create-pull-request pushes the release branch
+      pull-requests: write   # ...and opens/updates the PR
+    strategy:
+      fail-fast: false
+      matrix:
+        pkg: [resq-mcp, resq-dsa]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Full history: semantic-release decides the bump from the commits
+          # since the last tag, so a shallow clone makes it guess wrong.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          python-version: "3.13"
+
+      # Read-only. Measured against python-semantic-release 10.7.0 rather than
+      # assumed: `--print` exits 0 whether or not a release is warranted, and
+      # the "no release will be made" explanation goes to STDERR. So the only
+      # signal on stdout is emptiness-vs-a-version, and the exit code says
+      # nothing. Hence stderr is discarded and the value is matched against a
+      # bare semver -- an exit-code check would pass in both cases, and a mere
+      # non-empty check would accept any future diagnostic PSR decided to print
+      # on stdout as if it were a version number.
+      - name: Work out the next version
+        id: next
+        env:
+          PKG: ${{ matrix.pkg }}
+        run: |
+          set -uo pipefail
+          cd "packages/${PKG}"
+          next=$(uv tool run --from 'python-semantic-release==10.7.0' \
+                   semantic-release version --print 2>/dev/null) || true
+          next="${next//[[:space:]]/}"
+          if [ -z "$next" ]; then
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+            echo "no release warranted for ${PKG} at this commit"
+          elif printf '%s' "$next" \
+                 | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+([-+.][0-9A-Za-z.-]+)?$'; then
+            echo "version=${next}" >> "$GITHUB_OUTPUT"
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+            echo "next version: ${next}"
+          else
+            echo "::error title=release-pr::semantic-release --print returned something that is not a version: '${next}'" >&2
+            exit 1
+          fi
+
+      # Writes the new version into pyproject.toml and updates CHANGELOG.md,
+      # then stops. --no-commit leaves the edits in the working tree for
+      # create-pull-request to carry; --no-tag/--no-push/--no-vcs-release are
+      # what keep this off `main`. --skip-build because this job ships nothing.
+      - name: Apply the bump locally
+        if: steps.next.outputs.needed == 'true'
+        env:
+          PKG: ${{ matrix.pkg }}
+        run: |
+          set -euo pipefail
+          cd "packages/${PKG}"
+          uv tool run --from 'python-semantic-release==10.7.0' \
+            semantic-release version \
+              --no-commit --no-tag --no-push --no-vcs-release --skip-build
+          git --no-pager diff --stat
+
+      - name: Open or update the release PR
+        if: steps.next.outputs.needed == 'true'
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          branch: release/${{ matrix.pkg }}
+          base: main
+          commit-message: "chore(release): ${{ matrix.pkg }} ${{ steps.next.outputs.version }}"
+          title: "chore(release): ${{ matrix.pkg }} ${{ steps.next.outputs.version }}"
+          delete-branch: true
+          labels: release
+          body: |
+            Automated release preparation for `${{ matrix.pkg }}`, proposing
+            **${{ steps.next.outputs.version }}**.
+
+            Merging this PR lands the version bump and changelog on `main`
+            through the normal protected-branch policy. It does **not** publish
+            on its own — run the `Release` workflow (`publish.yml`) afterwards
+            to tag, attest and publish.
+
+            Generated by `release-pr.yml`; see that file's header for why
+            release preparation goes through a PR in this repo.
