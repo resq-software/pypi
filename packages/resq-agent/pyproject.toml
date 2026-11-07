@@ -33,8 +33,16 @@ classifiers = [
 ]
 dependencies = [
   "langchain>=0.3.0",
-  "langgraph>=0.2.0",
+  # >=1.2.14: GHSA-3fx2-cqw9-xr3c (CVSS 4.3) against langgraph 1.2.11, which
+  # also affects langgraph-sdk; the sdk arrives through langgraph, so this
+  # floor moves both. The previous >=0.2.0 floor permitted the whole
+  # vulnerable range for anyone resolving from PyPI.
+  "langgraph>=1.2.14",
   "langchain-mcp-adapters>=0.1.0",
+  # >=2026.10.18: PYSEC-2026-4320 (CVSS 9.1) against the 2026.7.22 CA bundle,
+  # transitive through the HTTP stack and floored here for the same reason as
+  # in resq-mcp.
+  "certifi>=2026.10.18",
   "pydantic-settings>=2.0.0",
 ]
 
