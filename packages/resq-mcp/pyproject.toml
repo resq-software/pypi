@@ -173,6 +173,23 @@ allowed_tags = ["feat", "fix", "perf", "refactor", "docs", "style", "test", "cho
 minor_tags = ["feat"]
 patch_tags = ["fix", "perf"]
 
+
+[tool.semantic_release.changelog]
+# `mode` defaults to "init", which REGENERATES this changelog from commit
+# history on every release. Two historical entries referenced another
+# repository by org-qualified name and commit SHA; redacting the file alone
+# would therefore be undone by the next release, because the commit messages
+# themselves are unchanged. Excluding the pattern from generation is what
+# makes the redaction durable.
+#
+# The pattern matches on SHAPE -- any "<ref>@<40-hex>" cross-reference -- so
+# this file does not name the thing it keeps out of the changelog. Single
+# quotes make it a TOML literal string, so the regex needs no escaping.
+# Changelog rendering only; version calculation is unaffected.
+exclude_commit_patterns = [
+  '(?i)sync from \S+@[0-9a-f]{40}',
+]
+
 [dependency-groups]
 dev = [
   "pytest>=8.0.0",

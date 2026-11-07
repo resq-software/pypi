@@ -27,10 +27,10 @@
 
 ### Chores
 
-- Sync from resq-software/resQ@18aafab67c7d86d022e163ef20f008967dc6b4ee
+- Sync from the internal source repository
   ([`b61e05d`](https://github.com/resq-software/pypi/commit/b61e05d8bd985eeaba732d3673a9de0fbfc8cf90))
 
-- Sync from resq-software/resQ@c4dbda0da57f48bdc6f8419405f602602b54647b
+- Sync from the internal source repository
   ([`727513e`](https://github.com/resq-software/pypi/commit/727513e5ebe875100c39d0b6ff0d668eb89ca5c1))
 
 ### Refactoring
