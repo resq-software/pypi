@@ -120,6 +120,43 @@ hskip() {
     return 1
 }
 
+HSKIP_SKIPPED=''
+HSKIP_RUNNING=''
+
+# hskip_mark <token|''> <label> — record a check as skipped or running.
+# An empty token means "only the all-off value can disable this check".
+hskip_mark() {
+    if { [ "$HSKIP_ALL" = 1 ]; } || { [ -n "$1" ] && hskip "$1"; }; then
+        HSKIP_SKIPPED="${HSKIP_SKIPPED:+$HSKIP_SKIPPED, }$2"
+    else
+        HSKIP_RUNNING="${HSKIP_RUNNING:+$HSKIP_RUNNING, }$2"
+    fi
+    return 0
+}
+
+# hskip_report [emphasis-line] — name, on stderr, exactly what this invocation
+# will and will not do. Silent when GIT_HOOKS_SKIP is unset: the "operator
+# believes checks ran when they did not" hazard only exists when it is set.
+# shellcheck disable=SC2120  # emphasis arg is optional; only pre-commit passes one
+hskip_report() {
+    if [ -z "${GIT_HOOKS_SKIP:-}" ]; then return 0; fi
+    if [ "$HSKIP_ALL" != 1 ] && [ -z "$HSKIP_SKIPPED" ]; then
+        printf '\nℹ️  GIT_HOOKS_SKIP=%s is set but disables nothing in %s — all checks ran.\n\n' \
+            "${GIT_HOOKS_SKIP:-}" "$HSKIP_HOOK" >&2
+        return 0
+    fi
+    if [ "$HSKIP_ALL" = 1 ]; then
+        printf '\n🚨 GIT_HOOKS_SKIP=%s — EVERY %s CHECK IS DISABLED.\n' \
+            "${GIT_HOOKS_SKIP:-}" "$HSKIP_HOOK" >&2
+    else
+        printf '\n⚠️  GIT_HOOKS_SKIP=%s is active for %s.\n' "${GIT_HOOKS_SKIP:-}" "$HSKIP_HOOK" >&2
+    fi
+    printf '   SKIPPED: %s\n' "${HSKIP_SKIPPED:-(nothing)}" >&2
+    printf '   RUNNING: %s\n' "${HSKIP_RUNNING:-(nothing)}" >&2
+    if [ -n "${1:-}" ]; then printf '   %s\n' "$1" >&2; fi
+    printf '\n' >&2
+}
+
 COMMIT_MSG_FILE="${1:-}"
 COMMIT_SOURCE="${2:-}"
 
@@ -137,9 +174,13 @@ esac
 BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "")
 [ -z "$BRANCH" ] && exit 0
 
-# `all` skips the whole hook, the local override below included. `ticket`
-# skips only the ticket prefix, so a local-prepare-commit-msg still runs
-# unless `local` is given as well.
+# Announce what this invocation will and will not do before doing any of it,
+# as pre-commit, commit-msg and pre-push do. `all` skips the whole hook, the
+# local override below included. `ticket` skips only the ticket prefix, so a
+# local-prepare-commit-msg still runs unless `local` is given as well.
+hskip_mark 'ticket' 'Ticket-ref prefix'
+hskip_mark 'local'  'local-prepare-commit-msg'
+hskip_report ""
 [ "$HSKIP_ALL" = 1 ] && exit 0
 
 TICKET=$(grep -oE '[A-Z]{2,}-[0-9]+' <<<"$BRANCH" | head -1 || true)
