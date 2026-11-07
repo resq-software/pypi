@@ -198,6 +198,40 @@ allowed_tags = ["feat", "fix", "perf", "refactor", "docs", "style", "test", "cho
 minor_tags = ["feat"]
 patch_tags = ["fix", "perf"]
 
+
+[tool.semantic_release.changelog]
+# Keeps org-qualified cross-references out of the generated changelog.
+#
+# Two historical entries named another repository in this organisation by
+# `<org>/<name>@<40-hex>`, which identifies a repository and a specific commit
+# in it. Those two lines are redacted in this commit. This exclusion is about
+# what happens NEXT.
+#
+# `mode` defaults to "update" in python-semantic-release (v10.6.2,
+# cli/config.py: `mode: ChangelogMode = ChangelogMode.UPDATE`), and this file
+# carries the insertion flag, so a normal release inserts the new version at
+# that flag and does not rewrite history. The redaction is therefore safe from
+# ordinary releases on its own. What it is NOT safe from is a future commit
+# with the same shape, which would be rendered into the next version's section
+# exactly as these two were -- and an explicit `init` regeneration, if anyone
+# ever runs one deliberately. This exclusion covers both.
+#
+# The pattern is anchored on the ORGANISATION rather than on wording, because
+# wording is not a reliable handle: an earlier version required the literal
+# "sync from" and a commit saying "synchronize from" would have walked past
+# it. It is deliberately not the bare `<ref>@<40-hex>` shape either, since
+# that also matches third-party pins such as a pinned action and would drop
+# legitimate entries from the changelog.
+#
+# Case-insensitive is safe here, unlike in a prose matcher: ordinary text does
+# not contain "<org>/<name>@<40 hex>". Only the organisation name appears
+# below, which is already in every public URL in this repository. Single
+# quotes make it a TOML literal string, so the regex needs no escaping. This
+# affects changelog rendering only; version calculation is untouched.
+exclude_commit_patterns = [
+  '(?i)resq-software/[A-Za-z0-9_.-]+@[0-9a-f]{40}',
+]
+
 [dependency-groups]
 dev = [
   "pytest>=8.0.0",
