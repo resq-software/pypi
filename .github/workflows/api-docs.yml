@@ -103,7 +103,7 @@ jobs:
         # poisoned cache. setup-uv@v6 enables caching by default, and
         # the docs generation runs only once per release tag — cache
         # hits don't justify the exposure here.
-        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: false
 
@@ -611,7 +611,7 @@ jobs:
           PYINNER
 
       - name: Open PR in docs repo
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
         with:
           path: docs-checkout
           token: ${{ secrets.DOCS_REPO_PR_TOKEN }}
